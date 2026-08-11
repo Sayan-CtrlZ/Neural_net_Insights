@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Settings, Shield, Bell, CreditCard, Key, Server, Lock, Eye, EyeOff, Loader2, Info } from 'lucide-react';
+import { Settings, Shield, Bell, CreditCard, Key, Server, Lock, Eye, EyeOff, Loader2, Info, User } from 'lucide-react';
 import { supabase } from '../../../lib/supabaseClient';
 import { useGlobalState } from '../GlobalStateContext';
 
@@ -84,7 +84,7 @@ export default function ProfilePage() {
         <div className="lg:col-span-2 space-y-8">
           
           {isRecovery && (
-            <div className="bg-indigo-50 border border-indigo-200 text-indigo-700 p-4 rounded-2xl flex items-start gap-3 shadow-sm">
+            <div className="bg-indigo-50 border border-indigo-200 text-indigo-700 p-4 rounded-2xl flex items-start gap-3 shadow-sm mb-8">
               <Info className="mt-0.5 shrink-0" size={18} />
               <div>
                 <h3 className="text-sm font-bold">Password Recovery</h3>
@@ -92,6 +92,25 @@ export default function ProfilePage() {
               </div>
             </div>
           )}
+
+          <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden mb-8">
+            <div className="bg-slate-50 px-5 py-3 flex items-center gap-2 border-b border-slate-100">
+              <User size={16} className="text-indigo-600"/>
+              <h2 className="text-sm font-bold text-slate-800">Account Information</h2>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-500 mb-1">Full Name</label>
+                  <p className="text-slate-900 font-medium">{session?.user?.user_metadata?.full_name || 'Not provided'}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-500 mb-1">Email Address</label>
+                  <p className="text-slate-900 font-medium">{session?.user?.email}</p>
+                </div>
+              </div>
+            </div>
+          </div>
 
           <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
             <div className="bg-slate-50 px-5 py-3 flex items-center gap-2 border-b border-slate-100">
@@ -180,24 +199,7 @@ export default function ProfilePage() {
           
         </div>
 
-        {/* Sidebar Settings Navigation */}
-        <div className="space-y-1">
-          <button className="w-full flex items-center gap-3 p-3 text-sm font-semibold rounded-xl bg-indigo-50 text-indigo-700 shadow-sm shadow-indigo-500/10">
-            <Shield size={18} /> Security
-          </button>
-          <button className="w-full flex items-center gap-3 p-3 text-sm font-semibold rounded-xl text-slate-500 hover:bg-slate-50 hover:text-indigo-600 transition-all">
-            <Settings size={18} /> General
-          </button>
-          <button className="w-full flex items-center gap-3 p-3 text-sm font-semibold rounded-xl text-slate-500 hover:bg-slate-50 hover:text-indigo-600 transition-all">
-            <Key size={18} /> API Keys
-          </button>
-          <button className="w-full flex items-center gap-3 p-3 text-sm font-semibold rounded-xl text-slate-500 hover:bg-slate-50 hover:text-indigo-600 transition-all">
-            <Bell size={18} /> Notifications
-          </button>
-          <button className="w-full flex items-center gap-3 p-3 text-sm font-semibold rounded-xl text-slate-500 hover:bg-slate-50 hover:text-indigo-600 transition-all">
-            <CreditCard size={18} /> Billing
-          </button>
-        </div>
+
 
       </div>
       

@@ -1,0 +1,14 @@
+# Python Test Files
+test_*.py
+tests/
+*test.py
+.pytest_cache/
+coverage.xml
+htmlcov/
+.coverage
+
+# Python general
+__pycache__/
+*.pyc
+venv/
+.env
