@@ -407,7 +407,7 @@ export default function Dashboard() {
 
           {/* Visualization Module */}
           <div className="bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#333333] rounded-2xl shadow-sm overflow-hidden relative">
-            <div className="bg-gradient-to-r from-violet-100/90 to-fuchsia-50/60 px-5 py-3 flex items-center justify-between border-b border-violet-100/50">
+            <div className="bg-gradient-to-r from-violet-100/90 to-fuchsia-50/60 dark:from-violet-900/40 dark:to-fuchsia-900/20 px-5 py-3 flex items-center justify-between border-b border-violet-100/50 dark:border-violet-900/50">
               <div className="flex items-center gap-2">
                 <Radar size={16} className="text-violet-700" />
                 <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">Telemetry</h2>
@@ -507,19 +507,19 @@ export default function Dashboard() {
                             <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${index === 0 ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-[#222222] text-slate-500 dark:text-slate-400 dark:text-slate-500'}`}>
                               #{index + 1}
                             </div>
-                            <span className={`font-bold text-xs ${index === 0 ? 'text-indigo-900' : 'text-slate-700 dark:text-slate-200'}`}>
+                            <span className={`font-bold text-xs ${index === 0 ? 'text-indigo-900 dark:text-indigo-200' : 'text-slate-700 dark:text-slate-200'}`}>
                               {modelMap[item.model] || item.model}
                             </span>
                           </div>
-                          <p className={`text-[10px] font-mono pl-7 ${index === 0 ? 'text-indigo-600 font-bold' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'}`}>
+                          <p className={`text-[10px] font-mono pl-7 ${index === 0 ? 'text-indigo-600 dark:text-indigo-300 font-bold' : 'text-slate-500 dark:text-slate-400'}`}>
                             Score: {item.score.toFixed(4)}
                           </p>
                         </div>
                       ))}
                       
                       {modelLeaderboard.length > 0 && (
-                        <div className="mt-4 p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-100 dark:border-emerald-900/50 text-emerald-800 text-[10px] leading-relaxed">
-                          <strong className="block mb-1 text-emerald-900">Recommendation:</strong> 
+                        <div className="mt-4 p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-100 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-200/80 text-[10px] leading-relaxed">
+                          <strong className="block mb-1 text-emerald-900 dark:text-emerald-300">Recommendation:</strong> 
                           The <strong>{modelMap[modelLeaderboard[0].model] || modelLeaderboard[0].model}</strong> architecture achieved the highest score. Use its exact hyperparameters from the registry below for production deployment.
                         </div>
                       )}
