@@ -6,12 +6,12 @@ import os
 
 logger = logging.getLogger(__name__)
 
-def upload_dataset_to_storage(file_bytes: bytes, filename: str) -> str:
+def upload_dataset_to_storage(client, file_bytes: bytes, filename: str) -> str:
     """
     Uploads a dataset to Supabase storage and returns the storage path.
     """
-    if not supabase_client:
-        logger.error("Supabase client not initialized")
+    if not client:
+        logger.error("Supabase client not provided")
         raise Exception("Storage not configured")
         
     ext = filename.split(".")[-1] if "." in filename else "csv"
@@ -19,7 +19,7 @@ def upload_dataset_to_storage(file_bytes: bytes, filename: str) -> str:
     
     # We upload directly to a 'datasets' bucket
     # Note: the bucket 'datasets' must exist in the Supabase project
-    response = supabase_client.storage.from_("datasets").upload(
+    response = client.storage.from_("datasets").upload(
         file=file_bytes,
         path=storage_path,
         file_options={"content-type": "text/csv"}
@@ -27,14 +27,14 @@ def upload_dataset_to_storage(file_bytes: bytes, filename: str) -> str:
     
     return storage_path
 
-def download_dataset_to_temp(storage_path: str) -> str:
+def download_dataset_to_temp(client, storage_path: str) -> str:
     """
     Downloads a dataset from Supabase to a temporary file and returns its path.
     """
-    if not supabase_client:
+    if not client:
         raise Exception("Storage not configured")
         
-    res = supabase_client.storage.from_("datasets").download(storage_path)
+    res = client.storage.from_("datasets").download(storage_path)
     
     # Save to a temp file so pandas chunked reading can read it
     temp_dir = tempfile.gettempdir()

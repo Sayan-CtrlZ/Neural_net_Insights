@@ -1,26 +1,78 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Papa from 'papaparse';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Database, UploadCloud, Activity, Zap, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
-import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from "react-resizable-panels";
+import { HardDrive, UploadCloud, Radar, Zap, Award, AlertCircle, Loader2, Maximize2, X, PanelLeftClose, PanelRightClose, PanelLeft, PanelRight, ChevronLeft, ChevronRight, Table, Activity, CheckCircle2, Database } from 'lucide-react';
+import { Group as PanelGroup, Panel, Separator as PanelResizeHandle, PanelImperativeHandle } from "react-resizable-panels";
+import { useGlobalState } from './GlobalStateContext';
 
 export default function Dashboard() {
-  const [file, setFile] = useState<File | null>(null);
-  const [columns, setColumns] = useState<string[]>([]);
-  const [previewData, setPreviewData] = useState<any[]>([]);
-  const [targetColumn, setTargetColumn] = useState('');
-  const [problemType, setProblemType] = useState('classification');
-  const [datasetId, setDatasetId] = useState('');
-  const [storagePath, setStoragePath] = useState('');
-  const [nTrials, setNTrials] = useState(15);
-  const [isUploading, setIsUploading] = useState(false);
-  const [runs, setRuns] = useState<any[]>([]);
-  const [chartData, setChartData] = useState<any[]>([]);
-  const [activeRunId, setActiveRunId] = useState<string | null>(null);
+  const {
+    file, setFile,
+    columns, setColumns,
+    previewData, setPreviewData,
+    targetColumn, setTargetColumn,
+    problemType, setProblemType,
+    datasetId, setDatasetId,
+    storagePath, setStoragePath,
+    nTrials, setNTrials,
+    runs, setRuns,
+    chartData, setChartData,
+    activeRunId, setActiveRunId,
+    activeRun, setActiveRun,
+    isChartFullscreen, setIsChartFullscreen,
+    previewLimit, setPreviewLimit,
+    isSidebarCollapsed, setIsSidebarCollapsed,
+    session
+  } = useGlobalState();
 
-  const API_URL = 'http://localhost:8000/api';
+  const [isUploading, setIsUploading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  const leftPanelRef = React.useRef<PanelImperativeHandle>(null);
+  const rightPanelRef = React.useRef<PanelImperativeHandle>(null);
+
+  useEffect(() => {
+    if (file) {
+      Papa.parse(file, {
+        header: true,
+        preview: previewLimit === 0 ? undefined : previewLimit,
+        complete: (results) => {
+          setPreviewData(results.data);
+        }
+      });
+    }
+  }, [previewLimit, file]);
+
+  const modelMap: Record<string, string> = {
+    'linreg': 'Linear Regression',
+    'logreg': 'Logistic Regression',
+    'rf': 'Random Forest',
+    'xgb': 'XGBoost',
+    'Unknown': 'Unknown'
+  };
+
+  const modelLeaderboard = React.useMemo(() => {
+    if (!chartData || chartData.length === 0) return [];
+    const modelScores: Record<string, number> = {};
+    chartData.forEach(t => {
+      if (t.value !== null && t.model) {
+        if (!modelScores[t.model] || t.value > modelScores[t.model]) {
+          modelScores[t.model] = t.value;
+        }
+      }
+    });
+    return Object.entries(modelScores)
+      .map(([model, score]) => ({ model, score }))
+      .sort((a, b) => b.score - a.score);
+  }, [chartData]);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
@@ -38,7 +90,11 @@ export default function Dashboard() {
         try {
           const formData = new FormData();
           formData.append('file', selectedFile);
-          const res = await fetch(`${API_URL}/datasets/upload`, { method: 'POST', body: formData });
+          const res = await fetch(`${API_URL}/datasets/upload`, { 
+            method: 'POST', 
+            body: formData,
+            headers: session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}
+          });
           const data = await res.json();
           setDatasetId(data.dataset_id);
           setStoragePath(data.storage_path);
@@ -88,50 +144,107 @@ export default function Dashboard() {
     formData.append('storage_path', storagePath);
     formData.append('n_trials', nTrials.toString());
 
-    const res = await fetch(`${API_URL}/optimize`, { method: 'POST', body: formData });
+    const res = await fetch(`${API_URL}/optimize`, { 
+      method: 'POST', 
+      body: formData,
+      headers: session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}
+    });
     const data = await res.json();
-    setRuns([{ id: data.run_id, status: 'running', dataset: file?.name, score: '-', error: null }, ...runs]);
+    const runObj = { id: data.run_id, status: 'running', dataset: file?.name, score: '-', error: null, params: '' };
+    setActiveRun(runObj);
     setActiveRunId(data.run_id);
-    pollStatus(data.run_id);
+    pollStatus(data.run_id, runObj);
   };
 
-  const pollStatus = async (runId: string) => {
-    const interval = setInterval(async () => {
-      const res = await fetch(`${API_URL}/optimize/${runId}/status`);
-      const data = await res.json();
+  const pollStatus = async (runId: string, initialRunObj: any) => {
+    let currentRunState = { ...initialRunObj };
+    
+    const checkStatus = async () => {
+      try {
+        const res = await fetch(`${API_URL}/optimize/${runId}/status`, {
+          headers: session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}
+        });
+        const data = await res.json();
 
-      setRuns(current => current.map(r => {
-        if (r.id === runId) {
-          return {
-            ...r,
-            status: data.status,
-            score: data.best_value ? data.best_value.toFixed(4) : '-',
-            params: data.best_params ? JSON.stringify(data.best_params) : '',
-            error: data.error
-          };
-        }
-        return r;
-      }));
+        currentRunState = {
+          ...currentRunState,
+          status: data.status,
+          score: data.best_value ? data.best_value.toFixed(4) : '-',
+          params: data.best_params ? JSON.stringify(data.best_params) : '',
+          error: data.error
+        };
 
-      if (activeRunId === runId || !activeRunId) {
-        const histRes = await fetch(`${API_URL}/optimize/${runId}/history`);
+        setActiveRun(currentRunState);
+
+        const histRes = await fetch(`${API_URL}/optimize/${runId}/history`, {
+          headers: session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}
+        });
         const histData = await histRes.json();
         if (histData.trials && histData.trials.length > 0) setChartData(histData.trials);
-      }
 
-      if (data.status === 'completed' || data.status === 'failed') {
-        clearInterval(interval);
+        if (data.status === 'completed' || data.status === 'failed') {
+          setRuns(prev => {
+            if (prev.some(r => r.id === currentRunState.id)) return prev;
+            return [currentRunState, ...prev];
+          });
+          setActiveRun(null);
+          return; // Stop polling
+        }
+      } catch (err) {
+        console.error("Polling error:", err);
       }
-    }, 3000);
+      
+      setTimeout(checkStatus, 3000);
+    };
+
+    setTimeout(checkStatus, 3000);
   };
 
+  if (!isMounted) {
+    return <div className="h-full w-full bg-white flex items-center justify-center text-slate-400">Loading...</div>;
+  }
+
   return (
-    <PanelGroup orientation="horizontal" className="h-full w-full bg-white text-black font-sans">
+    <div className="flex flex-col h-full w-full bg-white text-black font-sans">
+      {/* Top Application Bar */}
+      <div className="h-12 border-b border-slate-200 bg-slate-50 flex items-center justify-between px-4 shrink-0">
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className="p-1.5 rounded text-slate-500 hover:bg-slate-200 hover:text-slate-700 transition-colors"
+            title="Toggle Left Sidebar"
+          >
+            <PanelLeft size={18} />
+          </button>
+          <div className="flex items-center gap-2 font-bold text-slate-800 ml-2 border-l border-slate-300 pl-4">
+            <Activity size={16} className="text-indigo-600" />
+            Neural Net Insights
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 border-r border-slate-300 pr-4">
+            <span className="flex items-center gap-1.5"><Table size={14} /> Dataset Preview</span>
+          </div>
+          <button 
+            onClick={() => {
+              const panel = rightPanelRef.current;
+              if (panel) panel.isCollapsed() ? panel.expand() : panel.collapse();
+            }}
+            className="p-1.5 rounded text-slate-500 hover:bg-slate-200 hover:text-slate-700 transition-colors"
+            title="Toggle Data Preview"
+          >
+            <PanelRight size={18} />
+          </button>
+        </div>
+      </div>
 
-      {/* Left Pane: Config and Status */}
-      <Panel defaultSize={65} minSize={40} className="h-full flex flex-col overflow-y-auto custom-scrollbar">
+      <PanelGroup orientation="horizontal" className="flex-1">
 
-        <header className="px-8 py-6 border-b border-slate-200 flex justify-between items-end bg-[#FAFAFA] shrink-0">
+        {/* Left Pane: Config and Status */}
+        <Panel panelRef={leftPanelRef} collapsible={true} collapsedSize={0} defaultSize={65} minSize={40} className="h-full flex flex-col overflow-y-auto custom-scrollbar">
+
+          <header className="px-8 py-6 border-b border-slate-200 flex justify-between items-end bg-[#FAFAFA] shrink-0">
           <div>
             <h1 className="text-2xl font-bold tracking-tight mb-1 text-slate-900">Optuna Engine</h1>
             <p className="text-sm text-slate-500">Configure parameters and monitor telemetry.</p>
@@ -141,139 +254,250 @@ export default function Dashboard() {
         <div className="p-8 space-y-8">
 
           {/* Configuration Module */}
-          <div className="border border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            <div className="bg-black text-white px-4 py-2 flex items-center gap-2">
-              <Database size={14} />
-              <h2 className="text-xs font-bold uppercase tracking-wider">Module 01: Ingestion</h2>
+          <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
+            <div className="bg-gradient-to-r from-indigo-50/80 to-blue-50/30 px-5 py-3 flex items-center gap-2 border-b border-slate-100">
+              <HardDrive size={16} className="text-indigo-600" />
+              <h2 className="text-sm font-bold text-slate-800">Data Ingestion</h2>
             </div>
 
+            {activeRun ? (
+              <div className="p-8 h-[360px] flex flex-col items-center justify-center bg-slate-50">
+                <div className="relative mb-6">
+                   <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
+                   <div className="absolute inset-0 flex items-center justify-center">
+                     <Zap size={20} className="text-indigo-600 animate-pulse" />
+                   </div>
+                </div>
+                <h3 className="text-lg font-bold tracking-tight text-slate-800">Optimization in Progress</h3>
+                <p className="text-sm text-slate-500 font-mono mt-2">RUN_ID: {activeRun.id.split('-')[0]}</p>
+                
+                {activeRun.score !== '-' && (
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6 px-6 py-3 border border-slate-200 bg-white shadow-sm rounded-xl flex items-center gap-4">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Current Best</span>
+                    <span className="text-indigo-600 font-mono font-bold text-xl">{activeRun.score}</span>
+                  </motion.div>
+                )}
+              </div>
+            ) : (
+              <>
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
-                <label className="block text-xs font-bold uppercase mb-2">Upload Source</label>
-                <label className="relative border-2 border-dashed border-gray-300 bg-[#FAFAFA] flex flex-col items-center justify-center hover:border-black transition-colors cursor-pointer group h-24">
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Upload Source</label>
+                <label className="relative border-2 border-dashed border-slate-200 bg-slate-50 rounded-xl flex flex-col items-center justify-center hover:border-indigo-400 hover:bg-indigo-50 transition-all cursor-pointer group h-24">
                   <input type="file" accept=".csv" onChange={handleFileUpload} className="hidden" />
                   <AnimatePresence mode="wait">
                     {isUploading ? (
                       <motion.div key="uploading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
-                        <Loader2 className="animate-spin text-black" size={18} />
-                        <span className="text-sm font-semibold">Parsing...</span>
+                        <Loader2 className="animate-spin text-indigo-600" size={18} />
+                        <span className="text-sm font-medium text-slate-600">Parsing...</span>
                       </motion.div>
                     ) : file ? (
                       <motion.div key="file" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
-                        <CheckCircle2 className="text-black" size={18} />
-                        <span className="text-sm font-semibold truncate max-w-[150px]">{file.name}</span>
+                        <CheckCircle2 className="text-indigo-600" size={18} />
+                        <span className="text-sm font-medium text-indigo-700 truncate max-w-[150px]">{file.name}</span>
                       </motion.div>
                     ) : (
-                      <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2 text-gray-500 group-hover:text-black">
+                      <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2 text-slate-400 group-hover:text-indigo-600">
                         <UploadCloud size={18} />
-                        <span className="text-sm font-semibold">Select CSV</span>
+                        <span className="text-sm font-medium">Select CSV</span>
                       </motion.div>
                     )}
                   </AnimatePresence>
                 </label>
+                
+                <div className="mt-6 p-4 bg-indigo-50/40 border border-indigo-100/50 rounded-xl space-y-2.5">
+                  <h3 className="text-[10px] font-bold text-indigo-900/60 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Activity size={12}/> Enterprise Pipeline Active</h3>
+                  <div className="flex items-start gap-2 text-xs text-slate-700">
+                    <CheckCircle2 size={14} className="text-emerald-500 mt-0.5 shrink-0"/>
+                    <p><strong className="text-slate-900">Algorithm Search:</strong> Automatically evaluating Logistic Regression, Random Forest, and XGBoost.</p>
+                  </div>
+                  <div className="flex items-start gap-2 text-xs text-slate-700">
+                    <CheckCircle2 size={14} className="text-emerald-500 mt-0.5 shrink-0"/>
+                    <p><strong className="text-slate-900">Native Preprocessing:</strong> Automatic imputation, scaling, and OHE handled at ingestion.</p>
+                  </div>
+                  <div className="flex items-start gap-2 text-xs text-slate-700">
+                    <CheckCircle2 size={14} className="text-emerald-500 mt-0.5 shrink-0"/>
+                    <p><strong className="text-slate-900">Bayesian Optimization:</strong> TPE (Tree-structured Parzen Estimator) navigating hyperparameters.</p>
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div>
-                  <label className="block text-xs font-bold uppercase mb-2">Target Variable</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Target Variable</label>
                   <select value={targetColumn} onChange={e => setTargetColumn(e.target.value)} disabled={columns.length === 0}
-                    className="w-full bg-white border border-gray-300 p-2.5 text-sm font-medium focus:outline-none focus:border-black focus:ring-1 focus:ring-black rounded-none disabled:opacity-50 disabled:bg-gray-50">
-                    <option value="">[ Select Column ]</option>
+                    className="w-full bg-white border border-slate-200 p-2.5 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50 disabled:bg-slate-50 transition-all">
+                    <option value="">Select Target Column</option>
                     {columns.map(col => <option key={col} value={col}>{col}</option>)}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase mb-2">Domain</label>
-                  <div className="flex border border-gray-300">
-                    <button onClick={() => setProblemType('classification')} className={`flex-1 p-2 text-sm font-semibold transition-colors ${problemType === 'classification' ? 'bg-black text-white' : 'bg-[#FAFAFA] text-gray-500 hover:text-black'}`}>
-                      CLASS
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Problem Domain</label>
+                  <div className="flex p-1 bg-slate-100 rounded-xl">
+                    <button onClick={() => setProblemType('classification')} className={`flex-1 p-2 rounded-lg text-sm font-semibold transition-all ${problemType === 'classification' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                      Classification
                     </button>
-                    <div className="w-px bg-gray-300"></div>
-                    <button onClick={() => setProblemType('regression')} className={`flex-1 p-2 text-sm font-semibold transition-colors ${problemType === 'regression' ? 'bg-black text-white' : 'bg-[#FAFAFA] text-gray-500 hover:text-black'}`}>
-                      REGRESS
+                    <button onClick={() => setProblemType('regression')} className={`flex-1 p-2 rounded-lg text-sm font-semibold transition-all ${problemType === 'regression' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                      Regression
                     </button>
                   </div>
                 </div>
 
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <label className="block text-xs font-bold uppercase">Optimization Trials</label>
-                    <span className="text-xs font-mono bg-gray-100 px-2 py-0.5 border border-gray-300">{nTrials}</span>
+                    <label className="block text-sm font-semibold text-slate-700">Optimization Trials</label>
+                    <span className="text-xs font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md">{nTrials}</span>
                   </div>
                   <input
                     type="range"
                     min="1" max="50" step="1"
                     value={nTrials}
                     onChange={e => setNTrials(parseInt(e.target.value))}
-                    className="w-full cursor-pointer accent-black"
+                    className="w-full cursor-pointer accent-indigo-600"
                   />
-                  <p className="text-[10px] text-gray-400 mt-1 uppercase">Higher = Better accuracy, Slower execution</p>
+                  <p className="text-xs text-slate-500 mt-2">Higher trials yield better accuracy but increase execution time.</p>
                 </div>
               </div>
             </div>
 
-            <div className="p-4 border-t border-black bg-[#FAFAFA] flex justify-end">
+            <div className="p-5 border-t border-slate-100 bg-slate-50 flex justify-end">
               <button
                 onClick={startRun}
                 disabled={datasetId === '' || targetColumn === ''}
-                className="bg-black text-white px-6 py-2.5 text-sm font-bold flex items-center gap-2 hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-[2px_2px_0px_0px_rgba(200,200,200,1)] disabled:shadow-none"
+                className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 hover:bg-indigo-700 shadow-md shadow-indigo-500/20 hover:shadow-indigo-500/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
               >
-                <Zap size={14} /> INITIALIZE RUN
+                <Zap size={16} /> Initialize Run
               </button>
             </div>
+            </>
+            )}
           </div>
 
           {/* Visualization Module */}
-          <div className="border border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            <div className="bg-black text-white px-4 py-2 flex items-center gap-2">
-              <Activity size={14} />
-              <h2 className="text-xs font-bold uppercase tracking-wider">Module 02: Telemetry</h2>
+          <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden relative">
+            <div className="bg-gradient-to-r from-violet-50/80 to-fuchsia-50/30 px-5 py-3 flex items-center justify-between border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <Radar size={16} className="text-violet-600" />
+                <h2 className="text-sm font-bold text-slate-800">Telemetry</h2>
+              </div>
+              <button 
+                onClick={() => setIsChartFullscreen(true)}
+                className="text-slate-400 hover:text-indigo-600 transition-colors p-1"
+                title="View Fullscreen"
+              >
+                <Maximize2 size={16} />
+              </button>
             </div>
-            <div className="p-6 h-[350px] bg-white flex flex-col items-center justify-center relative border-b border-gray-100">
-              {chartData.length === 0 ? (
-                <div className="flex flex-col items-center text-gray-400 gap-2 font-mono text-sm">
-                  <Activity size={24} className="opacity-50" />
-                  <p>AWAITING_DATA</p>
+            <div className="flex flex-col lg:flex-row border-b border-gray-100 h-[350px]">
+              <div className="flex-1 p-6 relative bg-white border-r border-slate-100 flex flex-col justify-center">
+                {chartData.length === 0 ? (
+                  <div className="flex flex-col items-center text-gray-400 gap-2 font-mono text-sm">
+                    <Activity size={24} className="opacity-50" />
+                    <p>AWAITING_DATA</p>
+                  </div>
+                ) : (
+                  <div className="w-full h-full overflow-x-auto overflow-y-hidden custom-scrollbar">
+                    <div style={{ minWidth: `${Math.max(100, chartData.length * 6)}%`, height: '100%' }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 15 }}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                          <XAxis 
+                            dataKey="number" 
+                            tick={{ fontSize: 12, fill: '#000', fontWeight: 'bold' }} 
+                            axisLine={false} tickLine={false} 
+                            label={{ value: 'TRIAL NUMBER', position: 'insideBottom', offset: -10, fontSize: 10, fontWeight: 'bold', fill: '#6B7280' }}
+                          />
+                          <YAxis 
+                            domain={['auto', 'auto']} 
+                            tickCount={10}
+                            tick={{ fontSize: 12, fill: '#000', fontWeight: 'bold' }} 
+                            axisLine={false} tickLine={false} 
+                            label={{ value: 'SCORE', angle: -90, position: 'insideLeft', offset: 10, fontSize: 10, fontWeight: 'bold', fill: '#6B7280' }}
+                          />
+                          <Tooltip
+                            content={({ active, payload, label }: any) => {
+                              if (active && payload && payload.length) {
+                                const data = payload[0].payload;
+                                return (
+                                  <div className="bg-white border border-slate-100 p-3 rounded-xl shadow-lg">
+                                    <p className="font-bold text-[10px] text-slate-500 mb-1">Trial {label}</p>
+                                    <p className="text-slate-800 font-bold text-sm mb-1">{modelMap[data.model] || data.model}</p>
+                                    <p className="text-indigo-600 font-mono font-bold text-xs">Score: {Number(data.value).toFixed(4)}</p>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            }}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="value"
+                            stroke="#4F46E5"
+                            strokeWidth={2}
+                            dot={{ r: 3, fill: '#4F46E5', strokeWidth: 0 }}
+                            activeDot={{ r: 5, fill: '#fff', stroke: '#4F46E5', strokeWidth: 2 }}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Leaderboard Panel */}
+              <div className="w-full lg:w-72 bg-slate-50 flex flex-col border-t lg:border-t-0 border-slate-100 overflow-hidden shrink-0">
+                <div className="p-4 border-b border-slate-100 bg-white">
+                  <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5"><Activity size={12}/> Model Leaderboard</h3>
                 </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                    <XAxis dataKey="number" tick={{ fontSize: 12, fill: '#000', fontWeight: 'bold' }} axisLine={false} tickLine={false} />
-                    <YAxis domain={['auto', 'auto']} tick={{ fontSize: 12, fill: '#000', fontWeight: 'bold' }} axisLine={false} tickLine={false} />
-                    <Tooltip
-                      contentStyle={{ borderRadius: '4px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontWeight: 'bold' }}
-                      itemStyle={{ color: '#4F46E5' }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="value"
-                      stroke="#4F46E5"
-                      strokeWidth={2}
-                      dot={{ r: 3, fill: '#4F46E5', strokeWidth: 0 }}
-                      activeDot={{ r: 5, fill: '#fff', stroke: '#4F46E5', strokeWidth: 2 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              )}
+                <div className="flex-1 p-4 overflow-y-auto space-y-3 custom-scrollbar">
+                  {chartData.length === 0 ? (
+                    <div className="flex items-center justify-center h-full text-slate-400 text-xs font-mono">NO_MODELS</div>
+                  ) : (
+                    <>
+                      {modelLeaderboard.map((item, index) => (
+                        <div key={item.model} className={`p-3 rounded-xl border ${index === 0 ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-slate-200 shadow-sm'}`}>
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${index === 0 ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                              #{index + 1}
+                            </div>
+                            <span className={`font-bold text-xs ${index === 0 ? 'text-indigo-900' : 'text-slate-700'}`}>
+                              {modelMap[item.model] || item.model}
+                            </span>
+                          </div>
+                          <p className={`text-[10px] font-mono pl-7 ${index === 0 ? 'text-indigo-600 font-bold' : 'text-slate-500'}`}>
+                            Score: {item.score.toFixed(4)}
+                          </p>
+                        </div>
+                      ))}
+                      
+                      {modelLeaderboard.length > 0 && (
+                        <div className="mt-4 p-3 bg-emerald-50 rounded-lg border border-emerald-100 text-emerald-800 text-[10px] leading-relaxed">
+                          <strong className="block mb-1 text-emerald-900">Recommendation:</strong> 
+                          The <strong>{modelMap[modelLeaderboard[0].model] || modelLeaderboard[0].model}</strong> architecture achieved the highest score. Use its exact hyperparameters from the registry below for production deployment.
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Logs Module */}
-          <div className="border border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            <div className="bg-black text-white px-4 py-2 flex items-center gap-2">
-              <Database size={14} />
-              <h2 className="text-xs font-bold uppercase tracking-wider">Module 03: Registry</h2>
+          <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
+            <div className="bg-gradient-to-r from-emerald-50/80 to-teal-50/30 px-5 py-3 flex items-center gap-2 border-b border-slate-100">
+              <Award size={16} className="text-emerald-600" />
+              <h2 className="text-sm font-bold text-slate-800">Optimization Registry</h2>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left border-collapse">
-                <thead className="bg-[#FAFAFA] border-b border-black text-xs font-bold uppercase">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-slate-50 border-b border-slate-100 text-xs font-semibold text-slate-500">
                   <tr>
-                    <th className="px-5 py-3 border-r border-gray-200">Dataset</th>
-                    <th className="px-5 py-3 border-r border-gray-200">Status</th>
-                    <th className="px-5 py-3 border-r border-gray-200">R² / Accuracy</th>
-                    <th className="px-5 py-3">Architecture & Hyperparams</th>
+                    <th className="px-5 py-3 border-r border-slate-100 font-semibold">Dataset</th>
+                    <th className="px-5 py-3 border-r border-slate-100 font-semibold">Status</th>
+                    <th className="px-5 py-3 border-r border-slate-100 font-semibold">Metric Score</th>
+                    <th className="px-5 py-3 font-semibold">Architecture & Hyperparameters</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -287,32 +511,33 @@ export default function Dashboard() {
                         key={run.id || i}
                         className="hover:bg-gray-50 transition-colors"
                       >
-                        <td className="px-5 py-3 border-r border-gray-200 font-medium">
+                        <td className="px-5 py-4 border-r border-slate-100 font-medium text-slate-700 align-top max-w-[250px] break-words">
                           {run.dataset}
                           {run.error && (
-                            <div className="text-xs text-red-600 mt-1 max-w-[200px] truncate" title={run.error}>
-                              ERR: {run.error}
+                            <div className="text-xs text-red-600 mt-2 bg-red-50 p-2 rounded-lg border border-red-100 whitespace-pre-wrap">
+                              <span className="font-bold block mb-1">Error:</span>
+                              {run.error}
                             </div>
                           )}
                         </td>
-                        <td className="px-5 py-3 border-r border-gray-200">
+                        <td className="px-5 py-4 border-r border-slate-100">
                           {run.status === 'running' ? (
-                            <span className="inline-flex items-center gap-2 font-bold text-black text-xs border border-black px-2 py-0.5">
-                              <span className="w-1.5 h-1.5 bg-black animate-pulse"></span>
-                              RUNNING
+                            <span className="inline-flex items-center gap-2 font-bold text-indigo-700 text-xs border border-indigo-100 bg-indigo-50 rounded-full px-2.5 py-0.5">
+                              <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-pulse"></span>
+                              Running
                             </span>
                           ) : run.status === 'failed' ? (
-                            <span className="inline-flex items-center gap-1.5 font-bold text-white bg-black px-2 py-0.5 text-xs" title={run.error}>
-                              <AlertCircle size={10} /> FAILED
+                            <span className="inline-flex items-center gap-1.5 font-bold text-red-700 bg-red-50 border border-red-100 rounded-full px-2.5 py-0.5 text-xs" title={run.error}>
+                              <AlertCircle size={12} /> Failed
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1.5 font-bold text-gray-600 bg-gray-100 px-2 py-0.5 text-xs border border-gray-300">
-                              <CheckCircle2 size={10} /> DONE
+                            <span className="inline-flex items-center gap-1.5 font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full px-2.5 py-0.5 text-xs">
+                              <CheckCircle2 size={12} /> Done
                             </span>
                           )}
                         </td>
-                        <td className="px-5 py-3 border-r border-gray-200 font-mono font-bold text-blue-600">{run.score}</td>
-                        <td className="px-5 py-3 text-xs text-gray-600 font-mono">
+                        <td className="px-5 py-4 border-r border-slate-100 font-mono font-bold text-indigo-600">{run.score}</td>
+                        <td className="px-5 py-4 text-xs text-slate-500 font-mono">
                           {(() => {
                             if (!run.params) return '-';
                             try {
@@ -327,8 +552,17 @@ export default function Dashboard() {
                               const others = Object.entries(p).filter(([k]) => k !== 'model').map(([k, v]) => `${k}=${typeof v === 'number' ? v.toPrecision(3) : v}`).join(', ');
                               return (
                                 <div>
-                                  <span className="font-bold text-black block">{name}</span>
-                                  {others && <span className="text-[10px] text-gray-500 truncate max-w-[250px] block">{others}</span>}
+                                  <span className="font-bold text-slate-800 block">{name}</span>
+                                  {others && <span className="text-[10px] text-slate-500 truncate max-w-[250px] block mt-0.5">{others}</span>}
+                                  
+                                  <div className="flex flex-wrap gap-1.5 mt-2.5">
+                                    <span className="bg-indigo-50 text-indigo-700 border border-indigo-100/60 text-[9px] px-1.5 py-0.5 rounded font-bold tracking-wide flex items-center gap-1">
+                                      <Activity size={10} /> TPE Optimizer
+                                    </span>
+                                    <span className="bg-emerald-50 text-emerald-700 border border-emerald-100/60 text-[9px] px-1.5 py-0.5 rounded font-bold tracking-wide flex items-center gap-1">
+                                      <Database size={10} /> Auto-Preprocess
+                                    </span>
+                                  </div>
                                 </div>
                               );
                             } catch { return run.params; }
@@ -346,50 +580,157 @@ export default function Dashboard() {
       </Panel>
 
       {/* Resize Handle */}
-      <PanelResizeHandle className="w-1.5 bg-black hover:bg-blue-600 cursor-col-resize transition-colors shrink-0 z-10" />
+      <PanelResizeHandle className="w-1.5 bg-slate-200 hover:bg-indigo-500 cursor-col-resize transition-colors shrink-0 z-10" />
 
       {/* Right Pane: Data Preview */}
-      <Panel defaultSize={35} minSize={20} className="h-full bg-white flex flex-col">
-        <header className="px-6 py-6 border-b border-black flex justify-between items-end bg-[#FAFAFA] shrink-0">
+      <Panel panelRef={rightPanelRef} collapsible={true} collapsedSize={0} defaultSize={35} minSize={20} className="h-full bg-white flex flex-col border-l border-slate-200">
+        <header className="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 shrink-0">
           <div>
-            <h1 className="text-lg font-bold tracking-tight mb-1">Data Preview</h1>
-            <p className="text-xs text-gray-500 font-mono">HEAD -n 15</p>
+            <h1 className="text-sm font-bold tracking-tight text-slate-800 flex items-center gap-2">
+              <Table size={16} className="text-indigo-600" />
+              Data Preview
+            </h1>
+          </div>
+          <div className="flex items-center gap-3">
+            <label className="text-xs font-semibold text-slate-500">Rows:</label>
+            <select 
+              value={previewLimit} 
+              onChange={(e) => setPreviewLimit(Number(e.target.value))}
+              className="bg-white border border-slate-300 text-xs font-bold text-slate-700 rounded p-1 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={100}>100</option>
+              <option value={0}>All</option>
+            </select>
           </div>
         </header>
 
-        <div className="flex-1 overflow-auto bg-white custom-scrollbar p-4">
+        <div className="flex-1 overflow-auto bg-white">
           {previewData.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-gray-400 gap-3 font-mono text-sm">
-              <Database size={24} className="opacity-50" />
+            <div className="h-full flex flex-col items-center justify-center text-slate-400 gap-3 font-mono text-sm">
+              <Database size={24} className="opacity-50 text-slate-300" />
               <p>NO_DATA_MOUNTED</p>
             </div>
           ) : (
-            <table className="w-full text-xs text-left border-collapse border border-black">
-              <thead className="bg-[#FAFAFA] border-b border-black">
-                <tr>
-                  <th className="px-3 py-2 border-r border-black w-10 text-center font-bold">#</th>
-                  {columns.map(col => (
-                    <th key={col} className="px-3 py-2 border-r border-black font-bold whitespace-nowrap">{col}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 font-mono">
-                {previewData.map((row, i) => (
-                  <tr key={i} className="hover:bg-gray-50">
-                    <td className="px-3 py-2 border-r border-black text-gray-400 text-center bg-[#FAFAFA]">{i + 1}</td>
+            <div className="inline-block min-w-full align-middle">
+              <table className="min-w-full text-xs text-left border-separate border-spacing-0">
+                <thead className="bg-slate-100 text-slate-600 sticky top-0 z-20 shadow-sm">
+                  <tr>
+                    <th className="px-3 py-2 border-r border-b border-slate-300 w-12 text-center font-bold sticky left-0 z-30 bg-slate-200">#</th>
                     {columns.map(col => (
-                      <td key={col} className="px-3 py-2 border-r border-gray-200 whitespace-nowrap truncate max-w-[150px]">
-                        {row[col]}
-                      </td>
+                      <th key={col} className="px-4 py-2 border-r border-b border-slate-300 font-bold whitespace-nowrap bg-slate-100">
+                        {col}
+                      </th>
                     ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="font-mono text-slate-700">
+                  {previewData.map((row, i) => (
+                    <tr key={i} className="hover:bg-indigo-50 transition-colors group">
+                      <td className="px-3 py-1.5 border-r border-b border-slate-300 text-slate-500 text-center bg-slate-100 font-bold sticky left-0 z-10 group-hover:bg-indigo-100 group-hover:text-indigo-800 transition-colors">
+                        {i + 1}
+                      </td>
+                      {columns.map(col => (
+                        <td key={col} className="px-4 py-1.5 border-r border-b border-slate-200 whitespace-nowrap bg-white group-hover:bg-indigo-50/50 transition-colors">
+                          {row[col] !== null && row[col] !== undefined ? String(row[col]) : ''}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </Panel>
 
-    </PanelGroup>
+      {/* Fullscreen Chart Modal */}
+      <AnimatePresence>
+        {isChartFullscreen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-8"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white w-full h-full rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200"
+            >
+              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <div className="flex items-center gap-2">
+                  <Activity size={18} className="text-indigo-600" />
+                  <h2 className="text-lg font-bold text-slate-800">Telemetry: Fullscreen View</h2>
+                </div>
+                <button 
+                  onClick={() => setIsChartFullscreen(false)}
+                  className="text-slate-400 hover:text-red-500 transition-colors p-1 bg-white rounded-full border border-slate-200 shadow-sm hover:shadow-md"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="flex-1 p-8 bg-white relative">
+                {chartData.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-slate-400 gap-3 font-mono text-sm">
+                    <Activity size={32} className="opacity-50" />
+                    <p>AWAITING_DATA</p>
+                  </div>
+                ) : (
+                  <div className="w-full h-full overflow-hidden">
+                    <div style={{ width: '100%', height: '100%' }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={chartData} margin={{ top: 20, right: 30, left: 30, bottom: 20 }}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                          <XAxis 
+                            dataKey="number" 
+                            tick={{ fontSize: 14, fill: '#000', fontWeight: 'bold' }} 
+                            axisLine={false} tickLine={false} 
+                            label={{ value: 'TRIAL NUMBER', position: 'insideBottom', offset: -15, fontSize: 12, fontWeight: 'bold', fill: '#6B7280' }}
+                          />
+                          <YAxis 
+                            domain={['auto', 'auto']} 
+                            tickCount={15}
+                            tick={{ fontSize: 12, fill: '#000', fontWeight: 'bold' }} 
+                            axisLine={false} tickLine={false} 
+                            label={{ value: 'SCORE', angle: -90, position: 'insideLeft', offset: -15, fontSize: 12, fontWeight: 'bold', fill: '#6B7280' }}
+                          />
+                          <Tooltip
+                            content={({ active, payload, label }: any) => {
+                              if (active && payload && payload.length) {
+                                const data = payload[0].payload;
+                                return (
+                                  <div className="bg-white border border-slate-100 p-4 rounded-xl shadow-xl">
+                                    <p className="font-bold text-xs text-slate-500 mb-2">Trial {label}</p>
+                                    <p className="text-slate-800 font-bold text-lg mb-1">{modelMap[data.model] || data.model}</p>
+                                    <p className="text-indigo-600 font-mono font-bold text-sm">Score: {Number(data.value).toFixed(4)}</p>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            }}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="value"
+                            stroke="#4F46E5"
+                            strokeWidth={3}
+                            dot={{ r: 4, fill: '#4F46E5', strokeWidth: 0 }}
+                            activeDot={{ r: 7, fill: '#fff', stroke: '#4F46E5', strokeWidth: 3 }}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      </PanelGroup>
+    </div>
   );
 }

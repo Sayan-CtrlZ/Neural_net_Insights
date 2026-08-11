@@ -49,14 +49,14 @@ def objective(trial: optuna.Trial, X: pd.DataFrame, y: pd.Series, problem_type: 
         raise ValueError(f"Unknown problem_type: {problem_type}")
 
     # Compute cross-validated score
-    score = cross_val_score(model, X, y, cv=3, scoring=scoring).mean()
+    score = cross_val_score(model, X, y, cv=3, scoring=scoring, error_score='raise').mean()
     return score
 
-def run_optimization_local(X: pd.DataFrame, y: pd.Series, problem_type: str, n_trials: int = 10):
+def run_optimization_local(X: pd.DataFrame, y: pd.Series, problem_type: str, run_id: str, n_trials: int = 10):
     """
     Run Optuna optimization locally in-memory for testing purposes.
     """
-    logger.info(f"Starting local optimization for {problem_type} with {n_trials} trials")
+    logger.info(f"Starting local optimization for {problem_type} with {n_trials} trials (Run: {run_id})")
     
     # We maximize both accuracy and r2 in this setup
     from core.config import settings
@@ -77,7 +77,7 @@ def run_optimization_local(X: pd.DataFrame, y: pd.Series, problem_type: str, n_t
         pruner=optuna.pruners.MedianPruner(),
         storage=storage,
         load_if_exists=True,
-        study_name=f"study_{problem_type}"
+        study_name=f"study_{run_id}"
     )
     
     study.optimize(lambda trial: objective(trial, X, y, problem_type), n_trials=n_trials)
@@ -87,20 +87,19 @@ def run_optimization_local(X: pd.DataFrame, y: pd.Series, problem_type: str, n_t
     
     return study
 
-def run_optimization_background(run_id: str, problem_type: str, target_column: str, storage_path: str, runs_store: dict, n_trials: int = 15):
+def run_optimization_background(client, user_id: str, run_id: str, problem_type: str, target_column: str, storage_path: str, runs_store: dict, n_trials: int = 15):
     """
     Background task that downloads the dataset, runs Optuna, and updates the database.
     """
-    logger.info(f"Starting background run {run_id}")
+    logger.info(f"Starting background run {run_id} for user {user_id}")
     
-    from core.supabase import supabase_client
     from services.storage import download_dataset_to_temp
     from services.preprocessing import load_dataset
     import os
     
     try:
         # Download dataset from Supabase Storage
-        temp_file_path = download_dataset_to_temp(storage_path)
+        temp_file_path = download_dataset_to_temp(client, storage_path)
         
         # Load via chunking and downcasting
         df = load_dataset(temp_file_path)
@@ -111,6 +110,11 @@ def run_optimization_background(run_id: str, problem_type: str, target_column: s
             
         y = df[target_column]
         X = df.drop(columns=[target_column])
+        
+        # Label encode the target if it's classification (e.g. for XGBoost)
+        if problem_type == 'classification':
+            from sklearn.preprocessing import LabelEncoder
+            y = pd.Series(LabelEncoder().fit_transform(y))
         
         # Simple automatic preprocessing
         from sklearn.impute import SimpleImputer
@@ -137,19 +141,18 @@ def run_optimization_background(run_id: str, problem_type: str, target_column: s
         X_processed = preprocessor.fit_transform(X)
         # Convert back to DataFrame for Optuna runner which expects pd.DataFrame
         # Get new column names from one-hot encoding if needed, or just use indices
-        import pandas as pd
         X_processed_df = pd.DataFrame(X_processed)
         
         # Run optimization with user-defined trials
-        study = run_optimization_local(X_processed_df, y, problem_type, n_trials=n_trials)
+        study = run_optimization_local(X_processed_df, y, problem_type, run_id, n_trials=n_trials)
         
         # Clean up temp file
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
         
         # Update Supabase DB
-        if supabase_client:
-            supabase_client.table("runs").update({
+        if client:
+            client.table("runs").update({
                 "status": "completed",
                 "best_value": study.best_value,
                 "best_params": study.best_params
@@ -164,8 +167,8 @@ def run_optimization_background(run_id: str, problem_type: str, target_column: s
         
     except Exception as e:
         logger.error(f"Run {run_id} failed: {e}")
-        if supabase_client:
-            supabase_client.table("runs").update({
+        if client:
+            client.table("runs").update({
                 "status": "failed",
                 "error": str(e)
             }).eq("id", run_id).execute()

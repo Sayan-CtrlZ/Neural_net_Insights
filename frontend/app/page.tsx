@@ -21,19 +21,21 @@ export default function LandingPage() {
     <div className="min-h-screen bg-[#FAFAFA] text-black selection:bg-blue-600 selection:text-white font-sans overflow-hidden">
       
       {/* Abstract Background Elements */}
-      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden flex justify-center items-center opacity-[0.03]">
-        <div className="w-[800px] h-[800px] rounded-full border border-black absolute animate-[spin_60s_linear_infinite]" />
-        <div className="w-[1200px] h-[1200px] rounded-full border border-black absolute animate-[spin_90s_linear_infinite_reverse]" />
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden flex justify-center items-center opacity-[0.15]">
+        <div className="w-[800px] h-[800px] rounded-full border border-indigo-200 absolute animate-[spin_60s_linear_infinite]" />
+        <div className="w-[1200px] h-[1200px] rounded-full border border-violet-200 absolute animate-[spin_90s_linear_infinite_reverse]" />
       </div>
 
-      <nav className="border-b border-black/5 px-8 py-5 flex justify-between items-center bg-white/80 backdrop-blur-md sticky top-0 z-50">
+      <nav className="border-b border-slate-100 px-8 py-5 flex justify-between items-center bg-white/80 backdrop-blur-md sticky top-0 z-50">
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           className="flex items-center gap-3"
         >
-          <div className="w-5 h-5 bg-black rounded-[4px] shadow-[0_0_15px_rgba(0,0,0,0.2)]"></div>
-          <span className="font-bold tracking-tight text-lg">NEURAL_NET INSIGHTS</span>
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 shadow-indigo-500/20 shadow-lg flex items-center justify-center text-white">
+            <BrainCircuit size={18} />
+          </div>
+          <span className="font-bold tracking-tight text-lg text-slate-800">Neural Net Insights</span>
         </motion.div>
         
         <motion.div 
@@ -41,11 +43,11 @@ export default function LandingPage() {
           animate={{ opacity: 1, x: 0 }}
           className="flex gap-8 text-sm font-medium items-center"
         >
-          <a href="#features" className="text-gray-500 hover:text-black transition-colors relative group">
+          <a href="#features" className="text-slate-500 hover:text-indigo-600 transition-colors relative group">
             Features
-            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-black transition-all group-hover:w-full"></span>
+            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-600 transition-all group-hover:w-full"></span>
           </a>
-          <Link href="/dashboard" className="bg-black text-white px-5 py-2.5 rounded-full hover:bg-blue-600 hover:shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all flex items-center gap-2">
+          <Link href="/dashboard" className="bg-indigo-600 text-white px-5 py-2.5 rounded-full hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all flex items-center gap-2">
             Dashboard <ChevronRight size={16} />
           </Link>
         </motion.div>
@@ -60,24 +62,24 @@ export default function LandingPage() {
             variants={staggerContainer}
             className="flex flex-col items-center"
           >
-            <motion.div variants={fadeIn} className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-black/10 bg-white shadow-sm mb-8">
-              <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse"></span>
-              <span className="text-xs font-medium tracking-wide">Optuna v3 Engine Online</span>
+            <motion.div variants={fadeIn} className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-700 shadow-sm mb-8">
+              <span className="flex h-2 w-2 rounded-full bg-indigo-600 animate-pulse"></span>
+              <span className="text-xs font-semibold tracking-wide">Optuna v3 Engine Online</span>
             </motion.div>
             
-            <motion.h1 variants={fadeIn} className="text-5xl md:text-7xl lg:text-[5rem] font-semibold tracking-tighter mb-6 leading-[1.1]">
+            <motion.h1 variants={fadeIn} className="text-5xl md:text-7xl lg:text-[5rem] font-bold tracking-tight mb-6 leading-[1.1] text-slate-900">
               Automate Model Selection. <br className="hidden md:block"/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-400 to-gray-600">Zero Configuration.</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">Zero Configuration.</span>
             </motion.h1>
             
-            <motion.p variants={fadeIn} className="text-lg md:text-xl text-gray-500 max-w-2xl mb-12 leading-relaxed">
+            <motion.p variants={fadeIn} className="text-lg md:text-xl text-slate-500 max-w-2xl mb-12 leading-relaxed">
               Upload your dataset, select a target, and let our distributed Bayesian engine find the optimal machine learning architecture for your specific problem space.
             </motion.p>
             
             <motion.div variants={fadeIn} className="flex gap-4">
               <Link 
                 href="/dashboard"
-                className="bg-black text-white px-8 py-4 rounded-full text-sm font-medium hover:scale-105 hover:bg-blue-600 hover:shadow-[0_0_30px_rgba(37,99,235,0.3)] transition-all flex items-center gap-2 group"
+                className="bg-indigo-600 text-white px-8 py-4 rounded-full text-sm font-bold hover:scale-105 hover:bg-indigo-700 shadow-xl shadow-indigo-500/20 hover:shadow-indigo-500/40 transition-all flex items-center gap-2 group"
               >
                 Start Optimizing 
                 <ChevronRight className="group-hover:translate-x-1 transition-transform" size={16} />
@@ -87,8 +89,8 @@ export default function LandingPage() {
         </section>
 
         {/* Features Section */}
-        <section id="features" className="border-t border-black/5 bg-white relative">
-          <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px] opacity-30"></div>
+        <section id="features" className="border-t border-slate-100 bg-white relative">
+          <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px] opacity-50"></div>
           
           <div className="max-w-6xl mx-auto px-8 py-32 relative z-10">
             <motion.div 
@@ -97,8 +99,8 @@ export default function LandingPage() {
               viewport={{ once: true }}
               className="text-center mb-20"
             >
-              <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">Enterprise Grade Infrastructure</h2>
-              <p className="text-gray-500 mt-4 max-w-2xl mx-auto">Built on top of robust open-source libraries, containerized for scale.</p>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">Enterprise Grade Infrastructure</h2>
+              <p className="text-slate-500 mt-4 max-w-2xl mx-auto">Built on top of robust open-source libraries, containerized for scale.</p>
             </motion.div>
 
             <div className="grid md:grid-cols-3 gap-8">
@@ -125,13 +127,13 @@ export default function LandingPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
-                  className="bg-[#FAFAFA] border border-black/5 p-8 rounded-3xl hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 transition-all group"
+                  className="bg-white border border-slate-100 p-8 rounded-[2rem] shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-1 transition-all group"
                 >
-                  <div className="w-12 h-12 bg-white border border-black/5 rounded-2xl flex items-center justify-center mb-6 text-black group-hover:text-blue-600 group-hover:scale-110 transition-all shadow-sm">
+                  <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center mb-6 text-indigo-600 group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-inner">
                     {feature.icon}
                   </div>
-                  <h3 className="text-xl font-semibold mb-3 tracking-tight">{feature.title}</h3>
-                  <p className="text-gray-500 leading-relaxed text-sm">
+                  <h3 className="text-xl font-bold mb-3 tracking-tight text-slate-900">{feature.title}</h3>
+                  <p className="text-slate-500 leading-relaxed text-sm">
                     {feature.desc}
                   </p>
                 </motion.div>
@@ -141,11 +143,11 @@ export default function LandingPage() {
         </section>
       </main>
       
-      <footer className="border-t border-black/5 py-12 px-8 bg-white relative z-10">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
+      <footer className="border-t border-slate-100 py-12 px-8 bg-white relative z-10">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center text-sm text-slate-400">
           <div className="flex items-center gap-2 mb-4 md:mb-0">
-            <div className="w-3 h-3 bg-gray-300 rounded-[2px]"></div>
-            <span className="font-semibold text-gray-500">NEURAL_NET INSIGHTS</span>
+            <div className="w-4 h-4 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-md"></div>
+            <span className="font-bold text-slate-600">Neural Net Insights</span>
           </div>
           <p>&copy; {new Date().getFullYear()} NNI Inc. Minimal & Modern.</p>
         </div>

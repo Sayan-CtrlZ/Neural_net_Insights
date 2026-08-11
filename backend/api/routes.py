@@ -1,9 +1,10 @@
-from fastapi import APIRouter, BackgroundTasks, UploadFile, File, Form, HTTPException
+from fastapi import APIRouter, BackgroundTasks, UploadFile, File, Form, HTTPException, Depends
 import uuid
 import pandas as pd
 from services.optuna_runner import run_optimization_background
 from services.storage import upload_dataset_to_storage
-from core.supabase import supabase_client
+from core.security import get_auth_client
+from supabase import Client
 import logging
 
 logger = logging.getLogger(__name__)
@@ -12,7 +13,7 @@ router = APIRouter()
 runs = {}  # Fallback memory store if DB insert fails
 
 @router.post("/datasets/upload")
-async def upload_dataset(file: UploadFile = File(...)):
+async def upload_dataset(file: UploadFile = File(...), client: Client = Depends(get_auth_client)):
     try:
         # Prevent database/storage bursting: Max 50MB
         file.file.seek(0, 2)
@@ -23,14 +24,15 @@ async def upload_dataset(file: UploadFile = File(...)):
             raise HTTPException(status_code=413, detail="File too large. Maximum size is 50MB.")
             
         contents = await file.read()
-        storage_path = upload_dataset_to_storage(contents, file.filename)
+        storage_path = upload_dataset_to_storage(client, contents, file.filename)
         
         dataset_id = str(uuid.uuid4())
         
         # Save to Supabase DB (if available)
-        if supabase_client:
-            supabase_client.table("datasets").insert({
+        if client:
+            client.table("datasets").insert({
                 "id": dataset_id,
+                "user_id": client.user.id,
                 "filename": file.filename,
                 "storage_path": storage_path
             }).execute()
@@ -47,15 +49,17 @@ async def start_optimization(
     target_column: str = Form(...),
     storage_path: str = Form(...),
     n_trials: int = Form(15),
-    background_tasks: BackgroundTasks = None
+    background_tasks: BackgroundTasks = None,
+    client: Client = Depends(get_auth_client)
 ):
     run_id = str(uuid.uuid4())
     
     # Save run to Supabase
-    if supabase_client:
+    if client:
         try:
-            supabase_client.table("runs").insert({
+            client.table("runs").insert({
                 "id": run_id,
+                "user_id": client.user.id,
                 "dataset_id": dataset_id,
                 "status": "running",
                 "problem_type": problem_type,
@@ -69,6 +73,8 @@ async def start_optimization(
     if background_tasks:
         background_tasks.add_task(
             run_optimization_background, 
+            client=client,
+            user_id=client.user.id,
             run_id=run_id, 
             problem_type=problem_type, 
             target_column=target_column,
@@ -80,10 +86,10 @@ async def start_optimization(
     return {"run_id": run_id}
 
 @router.get("/optimize/{run_id}/status")
-async def get_status(run_id: str):
-    if supabase_client:
+async def get_status(run_id: str, client: Client = Depends(get_auth_client)):
+    if client:
         try:
-            res = supabase_client.table("runs").select("*").eq("id", run_id).execute()
+            res = client.table("runs").select("*").eq("id", run_id).execute()
             if res.data and len(res.data) > 0:
                 return res.data[0]
         except Exception as e:
@@ -99,19 +105,14 @@ async def get_results(run_id: str):
     return {"message": "Not implemented yet - Optuna direct DB query needed"}
 
 @router.get("/optimize/{run_id}/history")
-async def get_history(run_id: str):
+async def get_history(run_id: str, client: Client = Depends(get_auth_client)):
     """
     Returns the trial history (trial number vs score) for plotting the optimization curve.
     """
-    if supabase_client:
+    if client:
         try:
-            # Get problem_type to know the study name
-            run_res = supabase_client.table("runs").select("problem_type").eq("id", run_id).execute()
-            if not run_res.data:
-                return {"trials": []}
-            
-            problem_type = run_res.data[0]["problem_type"]
-            study_name = f"study_{problem_type}"
+            # Instead of looking up by problem_type, each run now has its own unique study name
+            study_name = f"study_{run_id}"
             
             # Since Optuna creates its own relational tables, it's easier to load the study via Optuna 
             # if we have the connection string.
@@ -128,7 +129,11 @@ async def get_history(run_id: str):
                     trials = []
                     for t in study.trials:
                         if t.state == optuna.trial.TrialState.COMPLETE and t.value is not None:
-                            trials.append({"number": t.number, "value": t.value})
+                            trials.append({
+                                "number": t.number, 
+                                "value": t.value,
+                                "model": t.params.get("model", "Unknown")
+                            })
                     return {"trials": trials}
                 except KeyError:
                     # Study doesn't exist yet
