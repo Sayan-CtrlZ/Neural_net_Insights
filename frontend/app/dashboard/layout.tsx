@@ -50,7 +50,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
               <div className="w-8 h-8 shrink-0 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 shadow-indigo-500/20 shadow-lg flex items-center justify-center text-white">
                 <BrainCircuit size={16} />
               </div>
-              <span className={`font-bold tracking-tight text-sm text-slate-800 dark:text-slate-100 transition-all duration-300 ${isSidebarCollapsed ? 'opacity-0 w-0 ml-0' : 'opacity-100 ml-3'}`}>Neural Net Insights</span>
+              <span className={`font-bold tracking-tight text-sm text-slate-800 dark:text-white transition-all duration-300 ${isSidebarCollapsed ? 'opacity-0 w-0 ml-0' : 'opacity-100 ml-3'}`}>Neural Net Insights</span>
             </Link>
           </div>
 
@@ -64,8 +64,8 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
                   href={item.href}
                   className={`flex items-center px-4 py-3 text-sm font-semibold transition-all rounded-xl ${
                     isActive 
-                      ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 shadow-sm shadow-indigo-500/10' 
-                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400'
+                      ? 'bg-indigo-50 dark:bg-white/10 text-indigo-700 dark:text-white shadow-sm shadow-indigo-500/10' 
+                      : 'text-slate-500 dark:text-white/60 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-white'
                   } ${isSidebarCollapsed ? 'justify-center' : 'gap-3'}`}
                 >
                   <div className="shrink-0">{item.icon}</div>
@@ -85,7 +85,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
             <ThemeToggle />
           </div>
 
-          <a href="#" className={`flex items-center px-4 py-2 text-sm font-medium text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors ${isSidebarCollapsed ? 'justify-center' : 'gap-3'}`}>
+          <a href="#" className={`flex items-center px-4 py-2 text-sm font-medium text-slate-400 hover:text-indigo-600 dark:hover:text-white transition-colors ${isSidebarCollapsed ? 'justify-center' : 'gap-3'}`}>
             <HelpCircle size={18} className="shrink-0" />
             <span className={`transition-all duration-300 ${isSidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100'}`}>Support</span>
           </a>

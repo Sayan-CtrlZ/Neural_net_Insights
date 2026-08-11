@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Papa from 'papaparse';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTheme } from 'next-themes';
 import { HardDrive, UploadCloud, Radar, Zap, Award, AlertCircle, Loader2, Maximize2, X, PanelLeftClose, PanelRightClose, PanelLeft, PanelRight, ChevronLeft, ChevronRight, Table, Activity, CheckCircle2, Database, Trash2, BrainCircuit } from 'lucide-react';
 import { Group as PanelGroup, Panel, Separator as PanelResizeHandle, PanelImperativeHandle } from "react-resizable-panels";
 import { useGlobalState } from './GlobalStateContext';
@@ -30,6 +31,8 @@ export default function Dashboard() {
 
   const [isUploading, setIsUploading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
 
   const leftPanelRef = React.useRef<PanelImperativeHandle>(null);
   const rightPanelRef = React.useRef<PanelImperativeHandle>(null);
@@ -230,22 +233,22 @@ export default function Dashboard() {
   };
 
   if (!isMounted) {
-    return <div className="h-full w-full bg-white dark:bg-[#121212] flex items-center justify-center text-slate-400 dark:text-slate-400 dark:text-slate-500">Loading...</div>;
+    return <div className="h-full w-full bg-white dark:bg-[#121212] flex items-center justify-center text-slate-400 dark:text-white/60 dark:text-white/40">Loading...</div>;
   }
 
   return (
     <div className="flex flex-col h-full w-full bg-white dark:bg-[#121212] text-black font-sans">
       {/* Top Application Bar */}
-      <div className="h-12 border-b border-slate-200 dark:border-[#333333] bg-slate-50 dark:bg-[#1a1a1a] flex items-center justify-between px-4 shrink-0">
+      <div className="h-12 border-b border-slate-200 dark:border-white/20 bg-slate-50 dark:bg-[#1a1a1a] flex items-center justify-between px-4 shrink-0">
         <div className="flex items-center gap-2">
           <button 
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className="p-1.5 rounded text-slate-500 dark:text-slate-500 hover:bg-slate-200 hover:text-slate-700 dark:text-slate-200 transition-colors"
+            className="p-1.5 rounded text-slate-500 dark:text-white/40 hover:bg-slate-200 hover:text-slate-700 dark:text-white/80 transition-colors"
             title="Toggle Left Sidebar"
           >
             <PanelLeft size={18} />
           </button>
-          <div className="flex items-center gap-3 font-bold text-slate-800 dark:text-slate-100 ml-2 border-l border-slate-300 pl-4">
+          <div className="flex items-center gap-3 font-bold text-slate-800 dark:text-white ml-2 border-l border-slate-300 pl-4">
             <div className="w-7 h-7 shrink-0 rounded-md bg-gradient-to-br from-indigo-500 to-violet-600 shadow-indigo-500/20 shadow-md flex items-center justify-center text-white">
               <BrainCircuit size={14} />
             </div>
@@ -254,7 +257,7 @@ export default function Dashboard() {
         </div>
         
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-500 border-r border-slate-300 pr-4">
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-white/40 border-r border-slate-300 pr-4">
             <span className="flex items-center gap-1.5"><Table size={14} /> Dataset Preview</span>
           </div>
           <button 
@@ -262,7 +265,7 @@ export default function Dashboard() {
               const panel = rightPanelRef.current;
               if (panel) panel.isCollapsed() ? panel.expand() : panel.collapse();
             }}
-            className="p-1.5 rounded text-slate-500 dark:text-slate-500 hover:bg-slate-200 hover:text-slate-700 dark:text-slate-200 transition-colors"
+            className="p-1.5 rounded text-slate-500 dark:text-white/40 hover:bg-slate-200 hover:text-slate-700 dark:text-white/80 transition-colors"
             title="Toggle Data Preview"
           >
             <PanelRight size={18} />
@@ -275,36 +278,36 @@ export default function Dashboard() {
         {/* Left Pane: Config and Status */}
         <Panel panelRef={leftPanelRef} collapsible={true} collapsedSize={0} defaultSize={65} minSize={40} className="h-full flex flex-col overflow-y-auto custom-scrollbar">
 
-          <header className="px-8 py-6 border-b border-slate-200 dark:border-[#333333] flex justify-between items-end bg-[#FAFAFA] dark:bg-[#121212] shrink-0">
+          <header className="px-8 py-6 border-b border-slate-200 dark:border-white/20 flex justify-between items-end bg-[#FAFAFA] dark:bg-[#121212] shrink-0">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight mb-1 text-slate-900 dark:text-slate-100">Optuna Engine</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Configure parameters and monitor telemetry.</p>
+            <h1 className="text-2xl font-bold tracking-tight mb-1 text-slate-900 dark:text-white">Optuna Engine</h1>
+            <p className="text-sm text-slate-500 dark:text-white/60 dark:text-white/40">Configure parameters and monitor telemetry.</p>
           </div>
         </header>
 
         <div className="p-8 space-y-8">
 
           {/* Configuration Module */}
-          <div className="bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#333333] rounded-2xl shadow-sm overflow-hidden">
-            <div className="bg-gradient-to-r from-indigo-100/90 to-blue-50/60 dark:from-indigo-900/40 dark:to-blue-900/20 px-5 py-3 flex items-center gap-2 border-b border-indigo-100 dark:border-indigo-900/50">
+          <div className="bg-white dark:bg-[#121212] border border-slate-200 dark:border-white/20 rounded-2xl shadow-sm overflow-hidden">
+            <div className="bg-gradient-to-r from-indigo-100/90 to-blue-50/60 dark:from-white/10 dark:to-white/5 px-5 py-3 flex items-center gap-2 border-b border-indigo-100 dark:border-white/20">
               <HardDrive size={16} className="text-indigo-700" />
-              <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">Data Ingestion</h2>
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Data Ingestion</h2>
             </div>
 
             {activeRun && activeRun.status === 'running' ? (
               <div className="p-8 h-[360px] flex flex-col items-center justify-center bg-slate-50 dark:bg-[#1a1a1a]">
                 <div className="relative mb-6">
-                   <div className="w-16 h-16 border-4 border-indigo-100 dark:border-indigo-900/50 border-t-indigo-600 rounded-full animate-spin"></div>
+                   <div className="w-16 h-16 border-4 border-indigo-100 dark:border-white/20 border-t-indigo-600 rounded-full animate-spin"></div>
                    <div className="absolute inset-0 flex items-center justify-center">
                      <Zap size={20} className="text-indigo-600 animate-pulse" />
                    </div>
                 </div>
-                <h3 className="text-lg font-bold tracking-tight text-slate-800 dark:text-slate-100">Optimization in Progress</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-500 font-mono mt-2">RUN_ID: {activeRun.id.split('-')[0]}</p>
+                <h3 className="text-lg font-bold tracking-tight text-slate-800 dark:text-white">Optimization in Progress</h3>
+                <p className="text-sm text-slate-500 dark:text-white/40 font-mono mt-2">RUN_ID: {activeRun.id.split('-')[0]}</p>
                 
                 {activeRun.score !== '-' && (
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6 px-6 py-3 border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#121212] shadow-sm rounded-xl flex items-center gap-4">
-                    <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Current Best</span>
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6 px-6 py-3 border border-slate-200 dark:border-white/20 bg-white dark:bg-[#121212] shadow-sm rounded-xl flex items-center gap-4">
+                    <span className="text-xs font-bold text-slate-400 dark:text-white/40 uppercase tracking-widest">Current Best</span>
                     <span className="text-indigo-600 font-mono font-bold text-xl">{activeRun.score}</span>
                   </motion.div>
                 )}
@@ -313,8 +316,8 @@ export default function Dashboard() {
               <>
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Upload Source</label>
-                <label className="relative border-2 border-dashed border-slate-200 dark:border-[#333333] bg-slate-50 dark:bg-[#1a1a1a] rounded-xl flex flex-col items-center justify-center hover:border-indigo-400 hover:bg-indigo-50 dark:bg-indigo-900/20 transition-all cursor-pointer group h-24">
+                <label className="block text-sm font-semibold text-slate-700 dark:text-white/80 mb-2">Upload Source</label>
+                <label className="relative border-2 border-dashed border-slate-200 dark:border-white/20 bg-slate-50 dark:bg-[#1a1a1a] rounded-xl flex flex-col items-center justify-center hover:border-indigo-400 hover:bg-indigo-50 dark:bg-white/10 transition-all cursor-pointer group h-24">
                   <input type="file" accept=".csv" onChange={handleFileUpload} className="hidden" />
                   <AnimatePresence mode="wait">
                     {isUploading ? (
@@ -328,7 +331,7 @@ export default function Dashboard() {
                         <span className="text-sm font-medium text-indigo-700 truncate max-w-[150px]">{file.name}</span>
                       </motion.div>
                     ) : (
-                      <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2 text-slate-400 dark:text-slate-500 group-hover:text-indigo-600">
+                      <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2 text-slate-400 dark:text-white/40 group-hover:text-indigo-600">
                         <UploadCloud size={18} />
                         <span className="text-sm font-medium">Select CSV</span>
                       </motion.div>
@@ -336,40 +339,40 @@ export default function Dashboard() {
                   </AnimatePresence>
                 </label>
                 
-                <div className="mt-6 p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-900/50 rounded-xl space-y-2.5">
-                  <h3 className="text-[10px] font-bold text-indigo-900/60 dark:text-indigo-200/80 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Activity size={12}/> Enterprise Pipeline Active</h3>
-                  <div className="flex items-start gap-2 text-xs text-slate-700 dark:text-slate-200">
+                <div className="mt-6 p-4 bg-indigo-50 dark:bg-white/10 border border-indigo-100 dark:border-white/20 rounded-xl space-y-2.5">
+                  <h3 className="text-[10px] font-bold text-indigo-900/60 dark:text-white/80 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Activity size={12}/> Enterprise Pipeline Active</h3>
+                  <div className="flex items-start gap-2 text-xs text-slate-700 dark:text-white/80">
                     <CheckCircle2 size={14} className="text-emerald-500 mt-0.5 shrink-0"/>
-                    <p><strong className="text-slate-900 dark:text-slate-100">Algorithm Search:</strong> Automatically evaluating Logistic Regression, Random Forest, and XGBoost.</p>
+                    <p><strong className="text-slate-900 dark:text-white">Algorithm Search:</strong> Automatically evaluating Logistic Regression, Random Forest, and XGBoost.</p>
                   </div>
-                  <div className="flex items-start gap-2 text-xs text-slate-700 dark:text-slate-200">
+                  <div className="flex items-start gap-2 text-xs text-slate-700 dark:text-white/80">
                     <CheckCircle2 size={14} className="text-emerald-500 mt-0.5 shrink-0"/>
-                    <p><strong className="text-slate-900 dark:text-slate-100">Native Preprocessing:</strong> Automatic imputation, scaling, and OHE handled at ingestion.</p>
+                    <p><strong className="text-slate-900 dark:text-white">Native Preprocessing:</strong> Automatic imputation, scaling, and OHE handled at ingestion.</p>
                   </div>
-                  <div className="flex items-start gap-2 text-xs text-slate-700 dark:text-slate-200">
+                  <div className="flex items-start gap-2 text-xs text-slate-700 dark:text-white/80">
                     <CheckCircle2 size={14} className="text-emerald-500 mt-0.5 shrink-0"/>
-                    <p><strong className="text-slate-900 dark:text-slate-100">Bayesian Optimization:</strong> TPE (Tree-structured Parzen Estimator) navigating hyperparameters.</p>
+                    <p><strong className="text-slate-900 dark:text-white">Bayesian Optimization:</strong> TPE (Tree-structured Parzen Estimator) navigating hyperparameters.</p>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-5">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Target Variable</label>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-white/80 mb-2">Target Variable</label>
                   <select value={targetColumn} onChange={e => setTargetColumn(e.target.value)} disabled={columns.length === 0}
-                    className="w-full bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#333333] p-2.5 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50 dark:bg-[#121212] disabled:bg-slate-50 dark:disabled:bg-[#1a1a1a] transition-all">
+                    className="w-full bg-white dark:bg-[#121212] border border-slate-200 dark:border-white/20 p-2.5 rounded-xl text-sm font-medium text-slate-700 dark:text-white/80 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50 dark:bg-[#121212] disabled:bg-slate-50 dark:disabled:bg-[#1a1a1a] transition-all">
                     <option value="">Select Target Column</option>
                     {columns.map(col => <option key={col} value={col}>{col}</option>)}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Problem Domain</label>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-white/80 mb-2">Problem Domain</label>
                   <div className="flex p-1 bg-slate-100 dark:bg-[#222222] rounded-xl">
-                    <button onClick={() => setProblemType('classification')} className={`flex-1 p-2 rounded-lg text-sm font-semibold transition-all ${problemType === 'classification' ? 'bg-white dark:bg-[#121212] text-indigo-700 shadow-sm' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:text-slate-200'}`}>
+                    <button onClick={() => setProblemType('classification')} className={`flex-1 p-2 rounded-lg text-sm font-semibold transition-all ${problemType === 'classification' ? 'bg-white dark:bg-[#121212] text-indigo-700 shadow-sm' : 'text-slate-500 dark:text-white/40 hover:text-slate-700 dark:text-white/80'}`}>
                       Classification
                     </button>
-                    <button onClick={() => setProblemType('regression')} className={`flex-1 p-2 rounded-lg text-sm font-semibold transition-all ${problemType === 'regression' ? 'bg-white dark:bg-[#121212] text-indigo-700 shadow-sm' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:text-slate-200'}`}>
+                    <button onClick={() => setProblemType('regression')} className={`flex-1 p-2 rounded-lg text-sm font-semibold transition-all ${problemType === 'regression' ? 'bg-white dark:bg-[#121212] text-indigo-700 shadow-sm' : 'text-slate-500 dark:text-white/40 hover:text-slate-700 dark:text-white/80'}`}>
                       Regression
                     </button>
                   </div>
@@ -377,8 +380,8 @@ export default function Dashboard() {
 
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Optimization Trials</label>
-                    <span className="text-xs font-bold text-indigo-700 bg-indigo-50 dark:bg-indigo-900/20 px-2.5 py-1 rounded-md">{nTrials}</span>
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-white/80">Optimization Trials</label>
+                    <span className="text-xs font-bold text-indigo-700 bg-indigo-50 dark:bg-white/10 px-2.5 py-1 rounded-md">{nTrials}</span>
                   </div>
                   <input
                     type="range"
@@ -387,7 +390,7 @@ export default function Dashboard() {
                     onChange={e => setNTrials(parseInt(e.target.value))}
                     className="w-full cursor-pointer accent-indigo-600"
                   />
-                  <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">Higher trials yield better accuracy but increase execution time.</p>
+                  <p className="text-xs text-slate-500 dark:text-white/40 mt-2">Higher trials yield better accuracy but increase execution time.</p>
                 </div>
               </div>
             </div>
@@ -406,22 +409,22 @@ export default function Dashboard() {
           </div>
 
           {/* Visualization Module */}
-          <div className="bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#333333] rounded-2xl shadow-sm overflow-hidden relative">
-            <div className="bg-gradient-to-r from-violet-100/90 to-fuchsia-50/60 dark:from-violet-900/40 dark:to-fuchsia-900/20 px-5 py-3 flex items-center justify-between border-b border-violet-100/50 dark:border-violet-900/50">
+          <div className="bg-white dark:bg-[#121212] border border-slate-200 dark:border-white/20 rounded-2xl shadow-sm overflow-hidden relative">
+            <div className="bg-gradient-to-r from-violet-100/90 to-fuchsia-50/60 dark:from-white/10 dark:to-white/5 px-5 py-3 flex items-center justify-between border-b border-violet-100/50 dark:border-white/20">
               <div className="flex items-center gap-2">
                 <Radar size={16} className="text-violet-700" />
-                <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">Telemetry</h2>
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white">Telemetry</h2>
               </div>
               <button 
                 onClick={() => setIsChartFullscreen(true)}
-                className="text-slate-400 dark:text-slate-500 hover:text-indigo-600 transition-colors p-1"
+                className="text-slate-400 dark:text-white/40 hover:text-indigo-600 transition-colors p-1"
                 title="View Fullscreen"
               >
                 <Maximize2 size={16} />
               </button>
             </div>
             <div className="flex flex-col lg:flex-row border-b border-gray-100 min-h-[350px]">
-              <div className="flex-1 p-6 relative bg-white dark:bg-[#121212] border-r border-slate-100 dark:border-[#2a2a2a] flex flex-col justify-center">
+              <div className="flex-1 p-6 relative bg-white dark:bg-[#121212] border-r border-slate-100 dark:border-white/20 flex flex-col justify-center">
                 {chartData.length === 0 ? (
                   <div className="flex flex-col items-center text-gray-400 gap-2 font-mono text-sm">
                     <Activity size={24} className="opacity-50" />
@@ -429,7 +432,7 @@ export default function Dashboard() {
                   </div>
                 ) : (
                   <div className="w-full h-full flex flex-col">
-                    <div className="flex items-center gap-4 text-[10px] font-bold text-slate-500 dark:text-slate-500 mb-2 px-4 shrink-0">
+                    <div className="flex items-center gap-4 text-[10px] font-bold text-slate-500 dark:text-white/40 mb-2 px-4 shrink-0">
                       <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#1D4ED8]"></span> Linear/Logistic</div>
                       <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#047857]"></span> Random Forest</div>
                       <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#C2410C]"></span> XGBoost</div>
@@ -441,25 +444,25 @@ export default function Dashboard() {
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                           <XAxis 
                             dataKey="number" 
-                            tick={{ fontSize: 12, fill: '#000', fontWeight: 'bold' }} 
+                            tick={{ fontSize: 12, fill: isDark ? '#e2e8f0' : '#000', fontWeight: 'bold' }} 
                             axisLine={false} tickLine={false} 
-                            label={{ value: 'TRIAL NUMBER', position: 'insideBottom', offset: -10, fontSize: 10, fontWeight: 'bold', fill: '#6B7280' }}
+                            label={{ value: 'TRIAL NUMBER', position: 'insideBottom', offset: -10, fontSize: 10, fontWeight: 'bold', fill: isDark ? '#9CA3AF' : '#6B7280' }}
                           />
                           <YAxis 
                             domain={['auto', 'auto']} 
                             tickCount={10}
-                            tick={{ fontSize: 12, fill: '#000', fontWeight: 'bold' }} 
+                            tick={{ fontSize: 12, fill: isDark ? '#e2e8f0' : '#000', fontWeight: 'bold' }} 
                             axisLine={false} tickLine={false} 
-                            label={{ value: 'SCORE', angle: -90, position: 'insideLeft', offset: -10, fontSize: 10, fontWeight: 'bold', fill: '#6B7280' }}
+                            label={{ value: 'SCORE', angle: -90, position: 'insideLeft', offset: -10, fontSize: 10, fontWeight: 'bold', fill: isDark ? '#9CA3AF' : '#6B7280' }}
                           />
                           <Tooltip
                             content={({ active, payload, label }: any) => {
                               if (active && payload && payload.length) {
                                 const data = payload[0].payload;
                                 return (
-                                  <div className="bg-white dark:bg-[#121212] border border-slate-100 dark:border-[#2a2a2a] p-3 rounded-xl shadow-lg">
-                                    <p className="font-bold text-[10px] text-slate-500 dark:text-slate-500 mb-1">Trial {label}</p>
-                                    <p className="text-slate-800 dark:text-slate-100 font-bold text-sm mb-1">{modelMap[data.model] || data.model}</p>
+                                  <div className="bg-white dark:bg-[#121212] border border-slate-100 dark:border-white/20 p-3 rounded-xl shadow-lg">
+                                    <p className="font-bold text-[10px] text-slate-500 dark:text-white/40 mb-1">Trial {label}</p>
+                                    <p className="text-slate-800 dark:text-white font-bold text-sm mb-1">{modelMap[data.model] || data.model}</p>
                                     <p className="text-indigo-600 font-mono font-bold text-xs">Score: {Number(data.value).toFixed(4)}</p>
                                   </div>
                                 );
@@ -492,26 +495,26 @@ export default function Dashboard() {
               </div>
               
               {/* Leaderboard Panel */}
-              <div className="w-full lg:w-72 bg-slate-50 dark:bg-[#1a1a1a] flex flex-col border-t lg:border-t-0 border-slate-100 dark:border-[#2a2a2a] overflow-hidden shrink-0">
-                <div className="p-4 border-b border-slate-100 dark:border-[#2a2a2a] bg-white dark:bg-[#121212]">
-                  <h3 className="text-[10px] font-bold text-slate-500 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5"><Activity size={12}/> Model Leaderboard</h3>
+              <div className="w-full lg:w-72 bg-slate-50 dark:bg-[#1a1a1a] flex flex-col border-t lg:border-t-0 border-slate-100 dark:border-white/20 overflow-hidden shrink-0">
+                <div className="p-4 border-b border-slate-100 dark:border-white/20 bg-white dark:bg-[#121212]">
+                  <h3 className="text-[10px] font-bold text-slate-500 dark:text-white/40 uppercase tracking-wider flex items-center gap-1.5"><Activity size={12}/> Model Leaderboard</h3>
                 </div>
                 <div className="flex-1 p-4 space-y-3">
                   {chartData.length === 0 ? (
-                    <div className="flex items-center justify-center h-full text-slate-400 dark:text-slate-500 text-xs font-mono">NO_MODELS</div>
+                    <div className="flex items-center justify-center h-full text-slate-400 dark:text-white/40 text-xs font-mono">NO_MODELS</div>
                   ) : (
                     <>
                       {modelLeaderboard.map((item, index) => (
-                        <div key={item.model} className={`p-3 rounded-xl border ${index === 0 ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-[#333333] shadow-sm'}`}>
+                        <div key={item.model} className={`p-3 rounded-xl border ${index === 0 ? 'bg-indigo-50 dark:bg-white/10 border-indigo-200' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-white/20 shadow-sm'}`}>
                           <div className="flex items-center gap-2 mb-1">
-                            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${index === 0 ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-[#222222] text-slate-500 dark:text-slate-400 dark:text-slate-500'}`}>
+                            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${index === 0 ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-[#222222] text-slate-500 dark:text-white/60 dark:text-white/40'}`}>
                               #{index + 1}
                             </div>
-                            <span className={`font-bold text-xs ${index === 0 ? 'text-indigo-900 dark:text-indigo-200' : 'text-slate-700 dark:text-slate-200'}`}>
+                            <span className={`font-bold text-xs ${index === 0 ? 'text-indigo-900 dark:text-white' : 'text-slate-700 dark:text-white/80'}`}>
                               {modelMap[item.model] || item.model}
                             </span>
                           </div>
-                          <p className={`text-[10px] font-mono pl-7 ${index === 0 ? 'text-indigo-600 dark:text-indigo-300 font-bold' : 'text-slate-500 dark:text-slate-400'}`}>
+                          <p className={`text-[10px] font-mono pl-7 ${index === 0 ? 'text-indigo-600 dark:text-white/90 font-bold' : 'text-slate-500 dark:text-white/60'}`}>
                             Score: {item.score.toFixed(4)}
                           </p>
                         </div>
@@ -529,32 +532,32 @@ export default function Dashboard() {
               </div>
             </div>
               {activeRun && (
-                <div className="border-t border-slate-100 dark:border-[#2a2a2a] bg-slate-50 dark:bg-[#1a1a1a]/50 p-4">
+                <div className="border-t border-slate-100 dark:border-white/20 bg-slate-50 dark:bg-[#1a1a1a]/50 p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="bg-indigo-100 text-indigo-700 p-2 rounded-lg">
                         <Activity size={16} />
                       </div>
                       <div>
-                        <div className="text-xs text-slate-500 dark:text-slate-500 font-bold mb-0.5">CURRENT RUN</div>
-                        <div className="text-sm font-mono font-bold text-slate-800 dark:text-slate-100">{activeRun.id}</div>
+                        <div className="text-xs text-slate-500 dark:text-white/40 font-bold mb-0.5">CURRENT RUN</div>
+                        <div className="text-sm font-mono font-bold text-slate-800 dark:text-white">{activeRun.id}</div>
                       </div>
                     </div>
                     
                     <div className="flex items-center gap-6">
                       <div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-500 font-bold mb-0.5 uppercase">Dataset</div>
-                        <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">{activeRun.dataset}</div>
+                        <div className="text-[10px] text-slate-500 dark:text-white/40 font-bold mb-0.5 uppercase">Dataset</div>
+                        <div className="text-xs font-semibold text-slate-700 dark:text-white/80">{activeRun.dataset}</div>
                       </div>
                       <div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-500 font-bold mb-0.5 uppercase">Score</div>
+                        <div className="text-[10px] text-slate-500 dark:text-white/40 font-bold mb-0.5 uppercase">Score</div>
                         <div className="text-xs font-mono font-bold text-indigo-600">{activeRun.score || '-'}</div>
                       </div>
                       <div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-500 font-bold mb-0.5 uppercase">Status</div>
+                        <div className="text-[10px] text-slate-500 dark:text-white/40 font-bold mb-0.5 uppercase">Status</div>
                         <div>
                           {activeRun.status === 'running' ? (
-                            <span className="inline-flex items-center gap-1.5 font-bold text-indigo-700 text-xs border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50 dark:bg-indigo-900/20 rounded-full px-2 py-0.5">
+                            <span className="inline-flex items-center gap-1.5 font-bold text-indigo-700 text-xs border border-indigo-100 dark:border-white/20 bg-indigo-50 dark:bg-white/10 rounded-full px-2 py-0.5">
                               <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-pulse"></span>
                               Running
                             </span>
@@ -587,20 +590,20 @@ export default function Dashboard() {
       <PanelResizeHandle className="w-1.5 bg-slate-200 hover:bg-indigo-500 cursor-col-resize transition-colors shrink-0 z-10" />
 
       {/* Right Pane: Data Preview */}
-      <Panel panelRef={rightPanelRef} collapsible={true} collapsedSize={0} defaultSize={35} minSize={20} className="h-full bg-white dark:bg-[#121212] flex flex-col border-l border-slate-200 dark:border-[#333333]">
-        <header className="px-6 py-4 border-b border-slate-200 dark:border-[#333333] flex justify-between items-center bg-slate-50 dark:bg-[#1a1a1a] shrink-0">
+      <Panel panelRef={rightPanelRef} collapsible={true} collapsedSize={0} defaultSize={35} minSize={20} className="h-full bg-white dark:bg-[#121212] flex flex-col border-l border-slate-200 dark:border-white/20">
+        <header className="px-6 py-4 border-b border-slate-200 dark:border-white/20 flex justify-between items-center bg-slate-50 dark:bg-[#1a1a1a] shrink-0">
           <div>
-            <h1 className="text-sm font-bold tracking-tight text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <h1 className="text-sm font-bold tracking-tight text-slate-800 dark:text-white flex items-center gap-2">
               <Table size={16} className="text-indigo-600" />
               Data Preview
             </h1>
           </div>
           <div className="flex items-center gap-3">
-            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500">Rows:</label>
+            <label className="text-xs font-semibold text-slate-500 dark:text-white/60 dark:text-white/40">Rows:</label>
             <select 
               value={previewLimit} 
               onChange={(e) => setPreviewLimit(Number(e.target.value))}
-              className="bg-white dark:bg-[#121212] border border-slate-300 text-xs font-bold text-slate-700 dark:text-slate-200 rounded p-1 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              className="bg-white dark:bg-[#121212] border border-slate-300 text-xs font-bold text-slate-700 dark:text-white/80 rounded p-1 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
             >
               <option value={10}>10</option>
               <option value={20}>20</option>
@@ -612,7 +615,7 @@ export default function Dashboard() {
 
         <div className="flex-1 overflow-auto bg-white dark:bg-[#121212]">
           {previewData.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 gap-3 font-mono text-sm">
+            <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-white/40 gap-3 font-mono text-sm">
               <Database size={24} className="opacity-50 text-slate-300" />
               <p>NO_DATA_MOUNTED</p>
             </div>
@@ -629,14 +632,14 @@ export default function Dashboard() {
                     ))}
                   </tr>
                 </thead>
-                <tbody className="font-mono text-slate-700 dark:text-slate-200">
+                <tbody className="font-mono text-slate-700 dark:text-white/80">
                   {previewData.map((row, i) => (
-                    <tr key={i} className="hover:bg-indigo-50 dark:bg-indigo-900/20 transition-colors group">
-                      <td className="px-3 py-1.5 border-r border-b border-slate-300 text-slate-500 dark:text-slate-500 text-center bg-slate-100 dark:bg-[#222222] font-bold sticky left-0 z-10 group-hover:bg-indigo-100 group-hover:text-indigo-800 transition-colors">
+                    <tr key={i} className="hover:bg-indigo-50 dark:bg-white/10 transition-colors group">
+                      <td className="px-3 py-1.5 border-r border-b border-slate-300 text-slate-500 dark:text-white/40 text-center bg-slate-100 dark:bg-[#222222] font-bold sticky left-0 z-10 group-hover:bg-indigo-100 group-hover:text-indigo-800 transition-colors">
                         {i + 1}
                       </td>
                       {columns.map(col => (
-                        <td key={col} className="px-4 py-1.5 border-r border-b border-slate-200 dark:border-[#333333] whitespace-nowrap bg-white dark:bg-[#121212] group-hover:bg-indigo-50 dark:bg-indigo-900/20/50 transition-colors">
+                        <td key={col} className="px-4 py-1.5 border-r border-b border-slate-200 dark:border-white/20 whitespace-nowrap bg-white dark:bg-[#121212] group-hover:bg-indigo-50 dark:bg-white/10/50 transition-colors">
                           {row[col] !== null && row[col] !== undefined ? String(row[col]) : ''}
                         </td>
                       ))}
@@ -662,29 +665,29 @@ export default function Dashboard() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white dark:bg-[#121212] w-full h-full rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-[#333333]"
+              className="bg-white dark:bg-[#121212] w-full h-full rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-white/20"
             >
-              <div className="px-6 py-4 border-b border-slate-100 dark:border-[#2a2a2a] flex items-center justify-between bg-slate-50 dark:bg-[#1a1a1a]">
+              <div className="px-6 py-4 border-b border-slate-100 dark:border-white/20 flex items-center justify-between bg-slate-50 dark:bg-[#1a1a1a]">
                 <div className="flex items-center gap-2">
                   <Activity size={18} className="text-indigo-600" />
-                  <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Telemetry: Fullscreen View</h2>
+                  <h2 className="text-lg font-bold text-slate-800 dark:text-white">Telemetry: Fullscreen View</h2>
                 </div>
                 <button 
                   onClick={() => setIsChartFullscreen(false)}
-                  className="text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors p-1 bg-white dark:bg-[#121212] rounded-full border border-slate-200 dark:border-[#333333] shadow-sm hover:shadow-md"
+                  className="text-slate-400 dark:text-white/40 hover:text-red-500 transition-colors p-1 bg-white dark:bg-[#121212] rounded-full border border-slate-200 dark:border-white/20 shadow-sm hover:shadow-md"
                 >
                   <X size={20} />
                 </button>
               </div>
               <div className="flex-1 p-8 bg-white dark:bg-[#121212] relative">
                 {chartData.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 gap-3 font-mono text-sm">
+                  <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-white/40 gap-3 font-mono text-sm">
                     <Activity size={32} className="opacity-50" />
                     <p>AWAITING_DATA</p>
                   </div>
                 ) : (
                   <div className="w-full h-full flex flex-col">
-                    <div className="flex items-center justify-center gap-6 text-xs font-bold text-slate-500 dark:text-slate-500 mb-4 shrink-0">
+                    <div className="flex items-center justify-center gap-6 text-xs font-bold text-slate-500 dark:text-white/40 mb-4 shrink-0">
                       <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#1D4ED8]"></span> Linear/Logistic Regression</div>
                       <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#047857]"></span> Random Forest</div>
                       <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#C2410C]"></span> XGBoost</div>
@@ -696,25 +699,25 @@ export default function Dashboard() {
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                           <XAxis 
                             dataKey="number" 
-                            tick={{ fontSize: 14, fill: '#000', fontWeight: 'bold' }} 
+                            tick={{ fontSize: 14, fill: isDark ? '#e2e8f0' : '#000', fontWeight: 'bold' }} 
                             axisLine={false} tickLine={false} 
-                            label={{ value: 'TRIAL NUMBER', position: 'insideBottom', offset: -15, fontSize: 12, fontWeight: 'bold', fill: '#6B7280' }}
+                            label={{ value: 'TRIAL NUMBER', position: 'insideBottom', offset: -15, fontSize: 12, fontWeight: 'bold', fill: isDark ? '#9CA3AF' : '#6B7280' }}
                           />
                           <YAxis 
                             domain={['auto', 'auto']} 
                             tickCount={15}
-                            tick={{ fontSize: 12, fill: '#000', fontWeight: 'bold' }} 
+                            tick={{ fontSize: 12, fill: isDark ? '#e2e8f0' : '#000', fontWeight: 'bold' }} 
                             axisLine={false} tickLine={false} 
-                            label={{ value: 'SCORE', angle: -90, position: 'insideLeft', offset: -15, fontSize: 12, fontWeight: 'bold', fill: '#6B7280' }}
+                            label={{ value: 'SCORE', angle: -90, position: 'insideLeft', offset: -15, fontSize: 12, fontWeight: 'bold', fill: isDark ? '#9CA3AF' : '#6B7280' }}
                           />
                           <Tooltip
                             content={({ active, payload, label }: any) => {
                               if (active && payload && payload.length) {
                                 const data = payload[0].payload;
                                 return (
-                                  <div className="bg-white dark:bg-[#121212] border border-slate-100 dark:border-[#2a2a2a] p-4 rounded-xl shadow-xl">
-                                    <p className="font-bold text-xs text-slate-500 dark:text-slate-500 mb-2">Trial {label}</p>
-                                    <p className="text-slate-800 dark:text-slate-100 font-bold text-lg mb-1">{modelMap[data.model] || data.model}</p>
+                                  <div className="bg-white dark:bg-[#121212] border border-slate-100 dark:border-white/20 p-4 rounded-xl shadow-xl">
+                                    <p className="font-bold text-xs text-slate-500 dark:text-white/40 mb-2">Trial {label}</p>
+                                    <p className="text-slate-800 dark:text-white font-bold text-lg mb-1">{modelMap[data.model] || data.model}</p>
                                     <p className="text-indigo-600 font-mono font-bold text-sm">Score: {Number(data.value).toFixed(4)}</p>
                                   </div>
                                 );

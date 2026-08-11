@@ -27,7 +27,7 @@ export default function LandingPage() {
         <div className="w-[1200px] h-[1200px] rounded-full bg-gradient-to-bl from-violet-500/10 to-transparent blur-[120px] absolute bottom-[-30%] right-[-10%]" />
       </div>
 
-      <nav className="border-b border-slate-100 dark:border-white/10 px-8 py-5 flex justify-between items-center bg-white/70 dark:bg-black/70 backdrop-blur-xl sticky top-0 z-50">
+      <nav className="border-b border-slate-100 dark:border-white/20 px-8 py-5 flex justify-between items-center bg-white/70 dark:bg-black/70 backdrop-blur-xl sticky top-0 z-50">
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -36,7 +36,7 @@ export default function LandingPage() {
           <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-indigo-500/30 shadow-lg flex items-center justify-center text-white">
             <BrainCircuit size={18} />
           </div>
-          <span className="font-bold tracking-tight text-lg text-slate-800 dark:text-slate-100">Neural Net Insights</span>
+          <span className="font-bold tracking-tight text-lg text-slate-800 dark:text-white">Neural Net Insights</span>
         </motion.div>
         
         <motion.div 
@@ -44,13 +44,13 @@ export default function LandingPage() {
           animate={{ opacity: 1, x: 0 }}
           className="flex gap-8 text-sm font-semibold items-center"
         >
-          <a href="#how-it-works" className="text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors hidden sm:block">
+          <a href="#how-it-works" className="text-slate-500 dark:text-white/60 hover:text-indigo-600 dark:hover:text-white transition-colors hidden sm:block">
             How it Works
           </a>
-          <a href="#features" className="text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors hidden sm:block">
+          <a href="#features" className="text-slate-500 dark:text-white/60 hover:text-indigo-600 dark:hover:text-white transition-colors hidden sm:block">
             Features
           </a>
-          <Link href="/login" className="text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+          <Link href="/login" className="text-slate-600 dark:text-white/70 hover:text-indigo-600 dark:hover:text-white transition-colors">
             Log in
           </Link>
           <ThemeToggle />
@@ -77,7 +77,7 @@ export default function LandingPage() {
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-600 animate-gradient-x">Zero Configuration.</span>
             </motion.h1>
             
-            <motion.p variants={fadeIn} className="text-lg md:text-xl text-slate-500 dark:text-slate-400 max-w-2xl mb-12 leading-relaxed">
+            <motion.p variants={fadeIn} className="text-lg md:text-xl text-slate-500 dark:text-white/60 max-w-2xl mb-12 leading-relaxed">
               Upload your dataset, select a target, and let our distributed Bayesian engine find the optimal machine learning architecture for your specific problem space.
             </motion.p>
             
@@ -105,7 +105,7 @@ export default function LandingPage() {
               className="text-center mb-24"
             >
               <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900 dark:text-white">How it works</h2>
-              <p className="text-slate-500 dark:text-slate-400 mt-6 max-w-2xl mx-auto text-lg">Three simple steps to production-ready models.</p>
+              <p className="text-slate-500 dark:text-white/60 mt-6 max-w-2xl mx-auto text-lg">Three simple steps to production-ready models.</p>
             </motion.div>
 
             <div className="grid md:grid-cols-3 gap-12 relative">
@@ -132,13 +132,13 @@ export default function LandingPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-50px" }}
                   transition={{ delay: i * 0.2, duration: 0.6, ease: "easeOut" }}
-                  className="bg-white/80 dark:bg-[#121212]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 p-10 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none relative z-10 hover:-translate-y-2 transition-transform duration-300"
+                  className="bg-white/80 dark:bg-[#121212]/80 backdrop-blur-xl border border-slate-200 dark:border-white/20 p-10 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none relative z-10 hover:-translate-y-2 transition-transform duration-300"
                 >
                   <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center mb-8 text-white shadow-lg shadow-indigo-500/30">
                     {step.icon}
                   </div>
                   <h3 className="text-2xl font-bold mb-4 tracking-tight text-slate-900 dark:text-white">{step.title}</h3>
-                  <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
+                  <p className="text-slate-500 dark:text-white/60 leading-relaxed">
                     {step.desc}
                   </p>
                 </motion.div>
@@ -157,7 +157,7 @@ export default function LandingPage() {
               className="text-center mb-20"
             >
               <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900 dark:text-white">Enterprise Infrastructure</h2>
-              <p className="text-slate-500 dark:text-slate-400 mt-6 max-w-2xl mx-auto text-lg">Built on top of robust open-source libraries, containerized for massive scale.</p>
+              <p className="text-slate-500 dark:text-white/60 mt-6 max-w-2xl mx-auto text-lg">Built on top of robust open-source libraries, containerized for massive scale.</p>
             </motion.div>
 
             <div className="grid md:grid-cols-3 gap-8">
@@ -184,14 +184,14 @@ export default function LandingPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
-                  className="bg-white/80 dark:bg-[#121212]/80 backdrop-blur-md border border-slate-200 dark:border-white/10/60 p-8 rounded-[2rem] shadow-sm hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-2 transition-all duration-300 group overflow-hidden relative"
+                  className="bg-white/80 dark:bg-[#121212]/80 backdrop-blur-md border border-slate-200 dark:border-white/20/60 p-8 rounded-[2rem] shadow-sm hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-2 transition-all duration-300 group overflow-hidden relative"
                 >
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 dark:bg-indigo-900/20 rounded-bl-full -z-10 transition-transform group-hover:scale-150 duration-500"></div>
-                  <div className="w-14 h-14 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-900/50 rounded-2xl flex items-center justify-center mb-6 text-indigo-600 group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300 shadow-inner">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 dark:bg-white/10 rounded-bl-full -z-10 transition-transform group-hover:scale-150 duration-500"></div>
+                  <div className="w-14 h-14 bg-indigo-50 dark:bg-white/10 border border-indigo-100 dark:border-white/20 rounded-2xl flex items-center justify-center mb-6 text-indigo-600 group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300 shadow-inner">
                     {feature.icon}
                   </div>
                   <h3 className="text-xl font-bold mb-3 tracking-tight text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">{feature.title}</h3>
-                  <p className="text-slate-500 dark:text-slate-400 leading-relaxed text-sm">
+                  <p className="text-slate-500 dark:text-white/60 leading-relaxed text-sm">
                     {feature.desc}
                   </p>
                 </motion.div>
@@ -230,11 +230,11 @@ export default function LandingPage() {
         </section>
       </main>
       
-      <footer className="border-t border-slate-200 dark:border-white/10 py-12 px-8 bg-transparent relative z-10">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center text-sm text-slate-500 dark:text-slate-400">
+      <footer className="border-t border-slate-200 dark:border-white/20 py-12 px-8 bg-transparent relative z-10">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center text-sm text-slate-500 dark:text-white/60">
           <div className="flex items-center gap-2 mb-4 md:mb-0">
             <div className="w-5 h-5 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-md shadow-sm"></div>
-            <span className="font-bold text-slate-800 dark:text-slate-100 text-base tracking-tight">Neural Net Insights</span>
+            <span className="font-bold text-slate-800 dark:text-white text-base tracking-tight">Neural Net Insights</span>
           </div>
           <div className="flex gap-6 mb-4 md:mb-0 font-medium">
             <a href="#" className="hover:text-indigo-600 transition-colors">Privacy</a>

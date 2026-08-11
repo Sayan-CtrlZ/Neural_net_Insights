@@ -158,7 +158,7 @@ export default function LoginPage() {
       
       {/* Back to Home Button */}
       <div className="absolute top-8 left-8 sm:top-12 sm:left-12 z-20">
-        <Link href="/" className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-indigo-600 transition-colors bg-white/80 dark:bg-black/50 backdrop-blur-md px-4 py-2 rounded-full shadow-sm border border-slate-200 dark:border-[#333333] hover:shadow-md">
+        <Link href="/" className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-white/40 hover:text-indigo-600 transition-colors bg-white/80 dark:bg-black/50 backdrop-blur-md px-4 py-2 rounded-full shadow-sm border border-slate-200 dark:border-white/20 hover:shadow-md">
           <ArrowLeft size={16} /> Back to Home
         </Link>
       </div>
@@ -178,7 +178,7 @@ export default function LoginPage() {
         <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
           Neural Net Insights
         </h2>
-        <p className="mt-2 text-center text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
+        <p className="mt-2 text-center text-sm text-slate-500 dark:text-white/60 dark:text-white/40">
           {step === 'login' && 'Sign in to access your models'}
           {step === 'signup' && 'Create a new account'}
           {step === 'signup_verify' && 'Enter the verification code'}
@@ -187,7 +187,7 @@ export default function LoginPage() {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-[480px]">
-        <div className="bg-white dark:bg-[#121212] py-8 px-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] sm:rounded-3xl sm:px-10 border border-slate-100 dark:border-white/10">
+        <div className="bg-white dark:bg-[#121212] py-8 px-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] sm:rounded-3xl sm:px-10 border border-slate-100 dark:border-white/20">
           
           {error && (
             <div className="mb-6 bg-red-50 border border-red-100 text-red-600 text-sm p-3 rounded-xl font-medium">
@@ -207,9 +207,9 @@ export default function LoginPage() {
 
               <form className="space-y-6" onSubmit={handleLogin}>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Email address</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-white/80">Email address</label>
                 <div className="mt-2 relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-white/40">
                     <Mail size={18} />
                   </div>
                   <input
@@ -217,16 +217,16 @@ export default function LoginPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="block w-full dark:bg-[#1a1a1a] dark:text-white pl-10 pr-3 py-2.5 border border-slate-200 dark:border-[#333333] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                    className="block w-full dark:bg-[#1a1a1a] dark:text-white pl-10 pr-3 py-2.5 border border-slate-200 dark:border-white/20 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
                     placeholder="admin@example.com"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Password</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-white/80">Password</label>
                 <div className="mt-2 relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-white/40">
                     <Lock size={18} />
                   </div>
                   <input
@@ -234,13 +234,13 @@ export default function LoginPage() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="block w-full dark:bg-[#1a1a1a] dark:text-white pl-10 pr-10 py-2.5 border border-slate-200 dark:border-[#333333] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                    className="block w-full dark:bg-[#1a1a1a] dark:text-white pl-10 pr-10 py-2.5 border border-slate-200 dark:border-white/20 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
                     placeholder="••••••••"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 dark:text-slate-500 hover:text-indigo-600 transition-colors"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 dark:text-white/40 hover:text-indigo-600 transition-colors"
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
@@ -268,17 +268,17 @@ export default function LoginPage() {
 
               <div className="relative mt-6 mb-6">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-200 dark:border-[#333333]"></div>
+                  <div className="w-full border-t border-slate-200 dark:border-white/20"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-3 bg-white dark:bg-[#121212] text-slate-500 dark:text-slate-400 dark:text-slate-500 font-medium">Or</span>
+                  <span className="px-3 bg-white dark:bg-[#121212] text-slate-500 dark:text-white/40 font-medium">Or</span>
                 </div>
               </div>
 
               <button
                 type="button"
                 onClick={handleGoogleLogin}
-                className="w-full flex justify-center items-center gap-3 py-2.5 px-4 border border-slate-200 dark:border-[#333333] rounded-xl shadow-sm text-sm font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-[#121212] hover:bg-slate-50 dark:bg-[#1a1a1a] hover:border-slate-300 transition-all"
+                className="w-full flex justify-center items-center gap-3 py-2.5 px-4 border border-slate-200 dark:border-white/20 rounded-xl shadow-sm text-sm font-bold text-slate-700 dark:text-white/80 bg-white dark:bg-[#121212] hover:bg-slate-50 dark:bg-[#1a1a1a] hover:border-slate-300 transition-all"
               >
                 <svg viewBox="0 0 24 24" className="w-5 h-5">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -293,7 +293,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => { clearMessages(); setStep('signup'); }}
-                  className="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition-colors"
+                  className="text-sm font-semibold text-slate-600 dark:text-white/70 hover:text-indigo-600 transition-colors"
                 >
                   Don't have an account? Sign up
                 </button>
@@ -308,9 +308,9 @@ export default function LoginPage() {
 
               <form className="space-y-6" onSubmit={handleSignup}>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Full Name</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-white/80">Full Name</label>
                 <div className="mt-2 relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-white/40">
                     <User size={18} />
                   </div>
                   <input
@@ -318,16 +318,16 @@ export default function LoginPage() {
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="block w-full dark:bg-[#1a1a1a] dark:text-white pl-10 pr-3 py-2.5 border border-slate-200 dark:border-[#333333] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                    className="block w-full dark:bg-[#1a1a1a] dark:text-white pl-10 pr-3 py-2.5 border border-slate-200 dark:border-white/20 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
                     placeholder="Jane Doe"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Email address</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-white/80">Email address</label>
                 <div className="mt-2 relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-white/40">
                     <Mail size={18} />
                   </div>
                   <input
@@ -335,16 +335,16 @@ export default function LoginPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="block w-full dark:bg-[#1a1a1a] dark:text-white pl-10 pr-3 py-2.5 border border-slate-200 dark:border-[#333333] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                    className="block w-full dark:bg-[#1a1a1a] dark:text-white pl-10 pr-3 py-2.5 border border-slate-200 dark:border-white/20 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
                     placeholder="admin@example.com"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Password</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-white/80">Password</label>
                 <div className="mt-2 relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-white/40">
                     <Lock size={18} />
                   </div>
                   <input
@@ -352,13 +352,13 @@ export default function LoginPage() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="block w-full dark:bg-[#1a1a1a] dark:text-white pl-10 pr-10 py-2.5 border border-slate-200 dark:border-[#333333] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                    className="block w-full dark:bg-[#1a1a1a] dark:text-white pl-10 pr-10 py-2.5 border border-slate-200 dark:border-white/20 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
                     placeholder="••••••••"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 dark:text-slate-500 hover:text-indigo-600 transition-colors"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 dark:text-white/40 hover:text-indigo-600 transition-colors"
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
@@ -366,9 +366,9 @@ export default function LoginPage() {
               </div>
               
               <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Confirm Password</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-white/80">Confirm Password</label>
                 <div className="mt-2 relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-white/40">
                     <ShieldCheck size={18} />
                   </div>
                   <input
@@ -376,13 +376,13 @@ export default function LoginPage() {
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="block w-full dark:bg-[#1a1a1a] dark:text-white pl-10 pr-10 py-2.5 border border-slate-200 dark:border-[#333333] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                    className="block w-full dark:bg-[#1a1a1a] dark:text-white pl-10 pr-10 py-2.5 border border-slate-200 dark:border-white/20 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
                     placeholder="••••••••"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 dark:text-slate-500 hover:text-indigo-600 transition-colors"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 dark:text-white/40 hover:text-indigo-600 transition-colors"
                   >
                     {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
@@ -400,17 +400,17 @@ export default function LoginPage() {
 
               <div className="relative mt-6 mb-6">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-200 dark:border-[#333333]"></div>
+                  <div className="w-full border-t border-slate-200 dark:border-white/20"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-3 bg-white dark:bg-[#121212] text-slate-500 dark:text-slate-400 dark:text-slate-500 font-medium">Or</span>
+                  <span className="px-3 bg-white dark:bg-[#121212] text-slate-500 dark:text-white/40 font-medium">Or</span>
                 </div>
               </div>
 
               <button
                 type="button"
                 onClick={handleGoogleLogin}
-                className="w-full flex justify-center items-center gap-3 py-2.5 px-4 border border-slate-200 dark:border-[#333333] rounded-xl shadow-sm text-sm font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-[#121212] hover:bg-slate-50 dark:bg-[#1a1a1a] hover:border-slate-300 transition-all"
+                className="w-full flex justify-center items-center gap-3 py-2.5 px-4 border border-slate-200 dark:border-white/20 rounded-xl shadow-sm text-sm font-bold text-slate-700 dark:text-white/80 bg-white dark:bg-[#121212] hover:bg-slate-50 dark:bg-[#1a1a1a] hover:border-slate-300 transition-all"
               >
                 <svg viewBox="0 0 24 24" className="w-5 h-5">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -425,7 +425,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => { clearMessages(); setStep('login'); }}
-                  className="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition-colors"
+                  className="text-sm font-semibold text-slate-600 dark:text-white/70 hover:text-indigo-600 transition-colors"
                 >
                   Already have an account? Sign in
                 </button>
@@ -437,9 +437,9 @@ export default function LoginPage() {
           {step === 'signup_verify' && (
             <form className="space-y-6" onSubmit={handleVerifyOtp}>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">6-Digit Verification Code</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-white/80">6-Digit Verification Code</label>
                 <div className="mt-2 relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-white/40">
                     <KeyRound size={18} />
                   </div>
                   <input
@@ -447,7 +447,7 @@ export default function LoginPage() {
                     required
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
-                    className="block w-full dark:bg-[#1a1a1a] dark:text-white pl-10 pr-3 py-2.5 border border-slate-200 dark:border-[#333333] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none text-center tracking-widest font-mono font-bold"
+                    className="block w-full dark:bg-[#1a1a1a] dark:text-white pl-10 pr-3 py-2.5 border border-slate-200 dark:border-white/20 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none text-center tracking-widest font-mono font-bold"
                     placeholder="123456"
                     maxLength={6}
                   />
@@ -482,9 +482,9 @@ export default function LoginPage() {
           {step === 'forgot_password' && (
             <form className="space-y-6" onSubmit={handleForgotPassword}>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Email address</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-white/80">Email address</label>
                 <div className="mt-2 relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-white/40">
                     <Mail size={18} />
                   </div>
                   <input
@@ -492,7 +492,7 @@ export default function LoginPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="block w-full dark:bg-[#1a1a1a] dark:text-white pl-10 pr-3 py-2.5 border border-slate-200 dark:border-[#333333] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                    className="block w-full dark:bg-[#1a1a1a] dark:text-white pl-10 pr-3 py-2.5 border border-slate-200 dark:border-white/20 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
                     placeholder="admin@example.com"
                   />
                 </div>
@@ -511,7 +511,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => { clearMessages(); setStep('login'); }}
-                  className="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition-colors"
+                  className="text-sm font-semibold text-slate-600 dark:text-white/70 hover:text-indigo-600 transition-colors"
                 >
                   Remember your password? Sign in
                 </button>
