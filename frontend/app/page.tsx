@@ -43,12 +43,15 @@ export default function LandingPage() {
           animate={{ opacity: 1, x: 0 }}
           className="flex gap-8 text-sm font-medium items-center"
         >
-          <a href="#features" className="text-slate-500 hover:text-indigo-600 transition-colors relative group">
+          <a href="#features" className="text-slate-500 hover:text-indigo-600 transition-colors relative group hidden sm:block">
             Features
             <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-600 transition-all group-hover:w-full"></span>
           </a>
-          <Link href="/dashboard" className="bg-indigo-600 text-white px-5 py-2.5 rounded-full hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all flex items-center gap-2">
-            Dashboard <ChevronRight size={16} />
+          <Link href="/login" className="text-slate-600 hover:text-indigo-600 font-semibold transition-colors">
+            Log in
+          </Link>
+          <Link href="/login" className="bg-indigo-600 text-white px-5 py-2.5 rounded-full hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all flex items-center gap-2">
+            Get Started <ChevronRight size={16} />
           </Link>
         </motion.div>
       </nav>
@@ -78,10 +81,10 @@ export default function LandingPage() {
             
             <motion.div variants={fadeIn} className="flex gap-4">
               <Link 
-                href="/dashboard"
+                href="/login"
                 className="bg-indigo-600 text-white px-8 py-4 rounded-full text-sm font-bold hover:scale-105 hover:bg-indigo-700 shadow-xl shadow-indigo-500/20 hover:shadow-indigo-500/40 transition-all flex items-center gap-2 group"
               >
-                Start Optimizing 
+                Get Started 
                 <ChevronRight className="group-hover:translate-x-1 transition-transform" size={16} />
               </Link>
             </motion.div>

@@ -66,6 +66,9 @@ export function GlobalStateProvider({ children }: { children: ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (_event === 'PASSWORD_RECOVERY') {
+        window.location.href = '/dashboard/profile?recovery=true';
+      }
     });
 
     return () => subscription.unsubscribe();
