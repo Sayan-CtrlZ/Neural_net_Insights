@@ -80,7 +80,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
 
         {/* Bottom Section */}
         <div className="p-4 space-y-4">
-          <div className="flex items-center justify-between px-4">
+          <div className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'justify-between px-4'}`}>
             {!isSidebarCollapsed && <span className="text-sm font-medium text-slate-400">Theme</span>}
             <ThemeToggle />
           </div>
