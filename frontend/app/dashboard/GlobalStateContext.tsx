@@ -77,13 +77,13 @@ export function GlobalStateProvider({ children }: { children: ReactNode }) {
   // Fetch user historical runs when session is active
   useEffect(() => {
     if (session) {
-      supabase.from('runs').select('*').order('created_at', { ascending: false }).then(({ data, error }: any) => {
+      supabase.from('runs').select('*, datasets(filename)').order('created_at', { ascending: false }).then(({ data, error }: any) => {
         if (!error && data) {
           // Map DB columns to our frontend state format
           const formattedRuns = data.map((r: any) => ({
             id: r.id,
             status: r.status,
-            dataset: r.dataset_id, // Would need to join datasets table to get actual filename, but keep simple for now
+            dataset: r.datasets?.filename || r.dataset_id,
             score: r.best_value ? r.best_value.toFixed(4) : '-',
             type: r.problem_type,
             error: r.error,

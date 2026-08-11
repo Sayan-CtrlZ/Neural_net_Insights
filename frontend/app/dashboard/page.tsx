@@ -3,9 +3,10 @@ import React, { useState, useEffect } from 'react';
 import Papa from 'papaparse';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HardDrive, UploadCloud, Radar, Zap, Award, AlertCircle, Loader2, Maximize2, X, PanelLeftClose, PanelRightClose, PanelLeft, PanelRight, ChevronLeft, ChevronRight, Table, Activity, CheckCircle2, Database } from 'lucide-react';
+import { HardDrive, UploadCloud, Radar, Zap, Award, AlertCircle, Loader2, Maximize2, X, PanelLeftClose, PanelRightClose, PanelLeft, PanelRight, ChevronLeft, ChevronRight, Table, Activity, CheckCircle2, Database, Trash2 } from 'lucide-react';
 import { Group as PanelGroup, Panel, Separator as PanelResizeHandle, PanelImperativeHandle } from "react-resizable-panels";
 import { useGlobalState } from './GlobalStateContext';
+import { supabase } from '../../lib/supabaseClient';
 
 export default function Dashboard() {
   const {
@@ -208,6 +209,45 @@ export default function Dashboard() {
     setTimeout(checkStatus, 3000);
   };
 
+  const loadRunIntoWorkspace = async (run: any) => {
+    setActiveRunId(run.id);
+    setActiveRun(run);
+    
+    try {
+      const histRes = await fetch(`${API_URL}/optimize/${run.id}/history`, {
+        headers: session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}
+      });
+      const histData = await histRes.json();
+      if (histData.trials && histData.trials.length > 0) {
+        setChartData(histData.trials);
+      } else {
+        setChartData([]);
+      }
+    } catch (err) {
+      console.error("Failed to load run history:", err);
+      setChartData([]);
+    }
+  };
+
+  const deleteRun = async (e: React.MouseEvent, runId: string) => {
+    e.stopPropagation(); // prevent clicking the row
+    try {
+      const { error } = await supabase.from('runs').delete().eq('id', runId);
+      if (!error) {
+        setRuns(prev => prev.filter(r => r.id !== runId));
+        if (activeRunId === runId) {
+          setActiveRun(null);
+          setActiveRunId(null);
+          setChartData([]);
+        }
+      } else {
+        console.error("Delete error:", error);
+      }
+    } catch (err) {
+      console.error("Failed to delete run:", err);
+    }
+  };
+
   if (!isMounted) {
     return <div className="h-full w-full bg-white flex items-center justify-center text-slate-400">Loading...</div>;
   }
@@ -397,7 +437,7 @@ export default function Dashboard() {
                 <Maximize2 size={16} />
               </button>
             </div>
-            <div className="flex flex-col lg:flex-row border-b border-gray-100 h-[350px]">
+            <div className="flex flex-col lg:flex-row border-b border-gray-100 min-h-[350px]">
               <div className="flex-1 p-6 relative bg-white border-r border-slate-100 flex flex-col justify-center">
                 {chartData.length === 0 ? (
                   <div className="flex flex-col items-center text-gray-400 gap-2 font-mono text-sm">
@@ -414,7 +454,7 @@ export default function Dashboard() {
                     <div className="w-full flex-1 overflow-x-auto overflow-y-hidden custom-scrollbar">
                       <div style={{ minWidth: `${Math.max(100, chartData.length * 6)}%`, height: '100%' }}>
                         <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 15 }}>
+                        <LineChart data={chartData} margin={{ top: 10, right: 20, left: 20, bottom: 15 }}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                           <XAxis 
                             dataKey="number" 
@@ -427,7 +467,7 @@ export default function Dashboard() {
                             tickCount={10}
                             tick={{ fontSize: 12, fill: '#000', fontWeight: 'bold' }} 
                             axisLine={false} tickLine={false} 
-                            label={{ value: 'SCORE', angle: -90, position: 'insideLeft', offset: 10, fontSize: 10, fontWeight: 'bold', fill: '#6B7280' }}
+                            label={{ value: 'SCORE', angle: -90, position: 'insideLeft', offset: -10, fontSize: 10, fontWeight: 'bold', fill: '#6B7280' }}
                           />
                           <Tooltip
                             content={({ active, payload, label }: any) => {
@@ -464,6 +504,7 @@ export default function Dashboard() {
                       </ResponsiveContainer>
                     </div>
                   </div>
+                </div>
                 )}
               </div>
               
@@ -472,7 +513,7 @@ export default function Dashboard() {
                 <div className="p-4 border-b border-slate-100 bg-white">
                   <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5"><Activity size={12}/> Model Leaderboard</h3>
                 </div>
-                <div className="flex-1 p-4 overflow-y-auto space-y-3 custom-scrollbar">
+                <div className="flex-1 p-4 space-y-3">
                   {chartData.length === 0 ? (
                     <div className="flex items-center justify-center h-full text-slate-400 text-xs font-mono">NO_MODELS</div>
                   ) : (
@@ -519,7 +560,8 @@ export default function Dashboard() {
                     <th className="px-5 py-3 border-r border-slate-100 font-semibold">Dataset</th>
                     <th className="px-5 py-3 border-r border-slate-100 font-semibold">Status</th>
                     <th className="px-5 py-3 border-r border-slate-100 font-semibold">Metric Score</th>
-                    <th className="px-5 py-3 font-semibold">Architecture & Hyperparameters</th>
+                    <th className="px-5 py-3 border-r border-slate-100 font-semibold">Architecture & Hyperparameters</th>
+                    <th className="px-5 py-3 font-semibold text-center w-16">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -531,14 +573,27 @@ export default function Dashboard() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         key={run.id || i}
-                        className="hover:bg-gray-50 transition-colors"
+                        onClick={() => loadRunIntoWorkspace(run)}
+                        className={`transition-colors cursor-pointer ${activeRunId === run.id ? 'bg-indigo-50/50' : 'hover:bg-gray-50'}`}
                       >
                         <td className="px-5 py-4 border-r border-slate-100 font-medium text-slate-700 align-top max-w-[250px] break-words">
                           {run.dataset}
                           {run.error && (
                             <div className="text-xs text-red-600 mt-2 bg-red-50 p-2 rounded-lg border border-red-100 whitespace-pre-wrap">
                               <span className="font-bold block mb-1">Error:</span>
-                              {run.error}
+                              {(() => {
+                                const err = run.error.toLowerCase();
+                                if (err.includes('psycopg2') || err.includes('sqlalchemy') || err.includes('network is unreachable')) {
+                                  return 'Database connection failed. Please check your database settings or pooler URL.';
+                                }
+                                if (err.includes('max clients reached')) {
+                                  return 'Database connection pool exhausted. Please switch to Transaction pooler mode.';
+                                }
+                                if (run.error.length > 150) {
+                                  return 'Optimization aborted due to an internal server error.';
+                                }
+                                return run.error;
+                              })()}
                             </div>
                           )}
                         </td>
@@ -589,6 +644,15 @@ export default function Dashboard() {
                               );
                             } catch { return run.params; }
                           })()}
+                        </td>
+                        <td className="px-5 py-4 text-center align-middle">
+                          <button
+                            onClick={(e) => deleteRun(e, run.id)}
+                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                            title="Delete Run"
+                          >
+                            <Trash2 size={16} />
+                          </button>
                         </td>
                       </motion.tr>
                     ))}
@@ -760,6 +824,7 @@ export default function Dashboard() {
                       </ResponsiveContainer>
                     </div>
                   </div>
+                </div>
                 )}
               </div>
             </motion.div>
