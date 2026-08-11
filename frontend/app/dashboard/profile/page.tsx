@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Settings, Shield, Bell, CreditCard, Key, Server, Lock, Eye, EyeOff, Loader2, Info } from 'lucide-react';
-import { supabase } from '../../../../lib/supabaseClient';
+import { supabase } from '../../../lib/supabaseClient';
 
 export default function ProfilePage() {
   const searchParams = useSearchParams();
