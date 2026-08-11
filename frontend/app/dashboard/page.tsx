@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Papa from 'papaparse';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HardDrive, UploadCloud, Radar, Zap, Award, AlertCircle, Loader2, Maximize2, X, PanelLeftClose, PanelRightClose, PanelLeft, PanelRight, ChevronLeft, ChevronRight, Table, Activity, CheckCircle2, Database, Trash2 } from 'lucide-react';
+import { HardDrive, UploadCloud, Radar, Zap, Award, AlertCircle, Loader2, Maximize2, X, PanelLeftClose, PanelRightClose, PanelLeft, PanelRight, ChevronLeft, ChevronRight, Table, Activity, CheckCircle2, Database, Trash2, BrainCircuit } from 'lucide-react';
 import { Group as PanelGroup, Panel, Separator as PanelResizeHandle, PanelImperativeHandle } from "react-resizable-panels";
 import { useGlobalState } from './GlobalStateContext';
 import { supabase } from '../../lib/supabaseClient';
@@ -55,11 +55,11 @@ export default function Dashboard() {
   };
 
   const modelColorMap: Record<string, string> = {
-    'linreg': '#3B82F6',
-    'logreg': '#3B82F6',
-    'rf': '#10B981',
-    'xgb': '#F59E0B',
-    'Unknown': '#94A3B8'
+    'linreg': '#1D4ED8',
+    'logreg': '#1D4ED8',
+    'rf': '#047857',
+    'xgb': '#C2410C',
+    'Unknown': '#475569'
   };
 
   const modelLeaderboard = React.useMemo(() => {
@@ -229,25 +229,6 @@ export default function Dashboard() {
     }
   };
 
-  const deleteRun = async (e: React.MouseEvent, runId: string) => {
-    e.stopPropagation(); // prevent clicking the row
-    try {
-      const { error } = await supabase.from('runs').delete().eq('id', runId);
-      if (!error) {
-        setRuns(prev => prev.filter(r => r.id !== runId));
-        if (activeRunId === runId) {
-          setActiveRun(null);
-          setActiveRunId(null);
-          setChartData([]);
-        }
-      } else {
-        console.error("Delete error:", error);
-      }
-    } catch (err) {
-      console.error("Failed to delete run:", err);
-    }
-  };
-
   if (!isMounted) {
     return <div className="h-full w-full bg-white flex items-center justify-center text-slate-400">Loading...</div>;
   }
@@ -264,8 +245,10 @@ export default function Dashboard() {
           >
             <PanelLeft size={18} />
           </button>
-          <div className="flex items-center gap-2 font-bold text-slate-800 ml-2 border-l border-slate-300 pl-4">
-            <Activity size={16} className="text-indigo-600" />
+          <div className="flex items-center gap-3 font-bold text-slate-800 ml-2 border-l border-slate-300 pl-4">
+            <div className="w-7 h-7 shrink-0 rounded-md bg-gradient-to-br from-indigo-500 to-violet-600 shadow-indigo-500/20 shadow-md flex items-center justify-center text-white">
+              <BrainCircuit size={14} />
+            </div>
             Neural Net Insights
           </div>
         </div>
@@ -308,7 +291,7 @@ export default function Dashboard() {
               <h2 className="text-sm font-bold text-slate-800">Data Ingestion</h2>
             </div>
 
-            {activeRun ? (
+            {activeRun && activeRun.status === 'running' ? (
               <div className="p-8 h-[360px] flex flex-col items-center justify-center bg-slate-50">
                 <div className="relative mb-6">
                    <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
@@ -409,13 +392,13 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="p-5 border-t border-slate-100 bg-slate-50 flex justify-end">
+            <div className="pt-2 pb-6 flex justify-center">
               <button
                 onClick={startRun}
                 disabled={datasetId === '' || targetColumn === ''}
-                className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 hover:bg-indigo-700 shadow-md shadow-indigo-500/20 hover:shadow-indigo-500/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                className="bg-indigo-600 text-white px-8 py-3 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-indigo-700 shadow-md shadow-indigo-500/20 hover:shadow-indigo-500/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
               >
-                <Zap size={16} /> Initialize Run
+                <Zap size={18} /> Start Model Optimization
               </button>
             </div>
             </>
@@ -447,9 +430,9 @@ export default function Dashboard() {
                 ) : (
                   <div className="w-full h-full flex flex-col">
                     <div className="flex items-center gap-4 text-[10px] font-bold text-slate-500 mb-2 px-4 shrink-0">
-                      <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#3B82F6]"></span> Linear/Logistic</div>
-                      <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#10B981]"></span> Random Forest</div>
-                      <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#F59E0B]"></span> XGBoost</div>
+                      <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#1D4ED8]"></span> Linear/Logistic</div>
+                      <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#047857]"></span> Random Forest</div>
+                      <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#C2410C]"></span> XGBoost</div>
                     </div>
                     <div className="w-full flex-1 overflow-x-auto overflow-y-hidden custom-scrollbar">
                       <div style={{ minWidth: `${Math.max(100, chartData.length * 6)}%`, height: '100%' }}>
@@ -487,7 +470,7 @@ export default function Dashboard() {
                           <Line
                             type="monotone"
                             dataKey="value"
-                            stroke="#E2E8F0"
+                            stroke="#94A3B8"
                             strokeWidth={2}
                             dot={(props: any) => {
                               const { cx, cy, payload } = props;
@@ -545,122 +528,57 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Logs Module */}
-          <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
-            <div className="bg-gradient-to-r from-emerald-50/80 to-teal-50/30 px-5 py-3 flex items-center gap-2 border-b border-slate-100">
-              <Award size={16} className="text-emerald-600" />
-              <h2 className="text-sm font-bold text-slate-800">Optimization Registry</h2>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="bg-slate-50 border-b border-slate-100 text-xs font-semibold text-slate-500">
-                  <tr>
-                    <th className="px-5 py-3 border-r border-slate-100 font-semibold">Dataset</th>
-                    <th className="px-5 py-3 border-r border-slate-100 font-semibold">Status</th>
-                    <th className="px-5 py-3 border-r border-slate-100 font-semibold">Metric Score</th>
-                    <th className="px-5 py-3 border-r border-slate-100 font-semibold">Architecture & Hyperparameters</th>
-                    <th className="px-5 py-3 font-semibold text-center w-16">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  <AnimatePresence>
-                    {runs.length === 0 ? (
-                      <tr><td colSpan={4} className="px-5 py-6 text-center text-gray-500 font-mono text-xs">NO_ENTRIES</td></tr>
-                    ) : runs.map((run, i) => (
-                      <motion.tr
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        key={run.id || i}
-                        onClick={() => loadRunIntoWorkspace(run)}
-                        className={`transition-colors cursor-pointer ${activeRunId === run.id ? 'bg-indigo-50/50' : 'hover:bg-gray-50'}`}
-                      >
-                        <td className="px-5 py-4 border-r border-slate-100 font-medium text-slate-700 align-top max-w-[250px] break-words">
-                          {run.dataset}
-                          {run.error && (
-                            <div className="text-xs text-red-600 mt-2 bg-red-50 p-2 rounded-lg border border-red-100 whitespace-pre-wrap">
-                              <span className="font-bold block mb-1">Error:</span>
-                              {(() => {
-                                const err = run.error.toLowerCase();
-                                if (err.includes('psycopg2') || err.includes('sqlalchemy') || err.includes('network is unreachable')) {
-                                  return 'Database connection failed. Please check your database settings or pooler URL.';
-                                }
-                                if (err.includes('max clients reached')) {
-                                  return 'Database connection pool exhausted. Please switch to Transaction pooler mode.';
-                                }
-                                if (run.error.length > 150) {
-                                  return 'Optimization aborted due to an internal server error.';
-                                }
-                                return run.error;
-                              })()}
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-5 py-4 border-r border-slate-100">
-                          {run.status === 'running' ? (
-                            <span className="inline-flex items-center gap-2 font-bold text-indigo-700 text-xs border border-indigo-100 bg-indigo-50 rounded-full px-2.5 py-0.5">
+              {activeRun && (
+                <div className="border-t border-slate-100 bg-slate-50/50 p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-indigo-100 text-indigo-700 p-2 rounded-lg">
+                        <Activity size={16} />
+                      </div>
+                      <div>
+                        <div className="text-xs text-slate-500 font-bold mb-0.5">CURRENT RUN</div>
+                        <div className="text-sm font-mono font-bold text-slate-800">{activeRun.id}</div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-6">
+                      <div>
+                        <div className="text-[10px] text-slate-500 font-bold mb-0.5 uppercase">Dataset</div>
+                        <div className="text-xs font-semibold text-slate-700">{activeRun.dataset}</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] text-slate-500 font-bold mb-0.5 uppercase">Score</div>
+                        <div className="text-xs font-mono font-bold text-indigo-600">{activeRun.score || '-'}</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] text-slate-500 font-bold mb-0.5 uppercase">Status</div>
+                        <div>
+                          {activeRun.status === 'running' ? (
+                            <span className="inline-flex items-center gap-1.5 font-bold text-indigo-700 text-xs border border-indigo-100 bg-indigo-50 rounded-full px-2 py-0.5">
                               <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-pulse"></span>
                               Running
                             </span>
-                          ) : run.status === 'failed' ? (
-                            <span className="inline-flex items-center gap-1.5 font-bold text-red-700 bg-red-50 border border-red-100 rounded-full px-2.5 py-0.5 text-xs" title={run.error}>
-                              <AlertCircle size={12} /> Failed
+                          ) : activeRun.status === 'failed' ? (
+                            <span className="inline-flex items-center gap-1 font-bold text-red-700 bg-red-50 border border-red-100 rounded-full px-2 py-0.5 text-xs" title={activeRun.error}>
+                              <AlertCircle size={10} /> Failed
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1.5 font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full px-2.5 py-0.5 text-xs">
-                              <CheckCircle2 size={12} /> Done
+                            <span className="inline-flex items-center gap-1 font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full px-2 py-0.5 text-xs">
+                              <CheckCircle2 size={10} /> Done
                             </span>
                           )}
-                        </td>
-                        <td className="px-5 py-4 border-r border-slate-100 font-mono font-bold text-indigo-600">{run.score}</td>
-                        <td className="px-5 py-4 text-xs text-slate-500 font-mono">
-                          {(() => {
-                            if (!run.params) return '-';
-                            try {
-                              const p = JSON.parse(run.params);
-                              const modelMap: Record<string, string> = {
-                                'linreg': 'Linear Regression',
-                                'logreg': 'Logistic Regression',
-                                'rf': 'Random Forest',
-                                'xgb': 'XGBoost'
-                              };
-                              const name = modelMap[p.model] || p.model;
-                              const others = Object.entries(p).filter(([k]) => k !== 'model').map(([k, v]) => `${k}=${typeof v === 'number' ? v.toPrecision(3) : v}`).join(', ');
-                              return (
-                                <div>
-                                  <span className="font-bold text-slate-800 block">{name}</span>
-                                  {others && <span className="text-[10px] text-slate-500 truncate max-w-[250px] block mt-0.5">{others}</span>}
-                                  
-                                  <div className="flex flex-wrap gap-1.5 mt-2.5">
-                                    <span className="bg-indigo-50 text-indigo-700 border border-indigo-100/60 text-[9px] px-1.5 py-0.5 rounded font-bold tracking-wide flex items-center gap-1">
-                                      <Activity size={10} /> TPE Optimizer
-                                    </span>
-                                    <span className="bg-emerald-50 text-emerald-700 border border-emerald-100/60 text-[9px] px-1.5 py-0.5 rounded font-bold tracking-wide flex items-center gap-1">
-                                      <Database size={10} /> Auto-Preprocess
-                                    </span>
-                                  </div>
-                                </div>
-                              );
-                            } catch { return run.params; }
-                          })()}
-                        </td>
-                        <td className="px-5 py-4 text-center align-middle">
-                          <button
-                            onClick={(e) => deleteRun(e, run.id)}
-                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
-                            title="Delete Run"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </td>
-                      </motion.tr>
-                    ))}
-                  </AnimatePresence>
-                </tbody>
-              </table>
+                        </div>
+                      </div>
+                      {activeRun.error && (
+                        <div className="text-[10px] text-red-600 bg-red-50 px-2 py-1 rounded-md border border-red-100 max-w-[300px] truncate font-semibold" title={activeRun.error}>
+                          Error: {activeRun.error}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
 
         </div>
       </Panel>
@@ -767,9 +685,9 @@ export default function Dashboard() {
                 ) : (
                   <div className="w-full h-full flex flex-col">
                     <div className="flex items-center justify-center gap-6 text-xs font-bold text-slate-500 mb-4 shrink-0">
-                      <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#3B82F6]"></span> Linear/Logistic Regression</div>
-                      <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#10B981]"></span> Random Forest</div>
-                      <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]"></span> XGBoost</div>
+                      <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#1D4ED8]"></span> Linear/Logistic Regression</div>
+                      <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#047857]"></span> Random Forest</div>
+                      <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#C2410C]"></span> XGBoost</div>
                     </div>
                     <div className="w-full flex-1 overflow-hidden">
                       <div style={{ width: '100%', height: '100%' }}>
@@ -807,7 +725,7 @@ export default function Dashboard() {
                           <Line
                             type="monotone"
                             dataKey="value"
-                            stroke="#E2E8F0"
+                            stroke="#94A3B8"
                             strokeWidth={3}
                             dot={(props: any) => {
                               const { cx, cy, payload } = props;

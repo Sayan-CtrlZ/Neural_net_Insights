@@ -1,10 +1,55 @@
 'use client';
 import React from 'react';
-import { Activity, Clock, Zap, History, Trash2, Database } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Activity, Clock, Zap, History, Trash2, Database, Play } from 'lucide-react';
 import { useGlobalState } from '../GlobalStateContext';
+import { supabase } from '../../../lib/supabaseClient';
 
 export default function HistoryPage() {
-  const { runs } = useGlobalState();
+  const { runs, setRuns, setActiveRunId, setActiveRun, setChartData, activeRunId, session } = useGlobalState();
+  const router = useRouter();
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+
+  const deleteRun = async (e: React.MouseEvent, runId: string) => {
+    e.stopPropagation();
+    try {
+      const { error } = await supabase.from('runs').delete().eq('id', runId);
+      if (!error) {
+        setRuns(prev => prev.filter(r => r.id !== runId));
+        if (activeRunId === runId) {
+          setActiveRun(null);
+          setActiveRunId(null);
+          setChartData([]);
+        }
+      } else {
+        console.error("Delete error:", error);
+      }
+    } catch (err) {
+      console.error("Failed to delete run:", err);
+    }
+  };
+
+  const loadRunIntoWorkspace = async (run: any) => {
+    setActiveRunId(run.id);
+    setActiveRun(run);
+    
+    try {
+      const histRes = await fetch(`${API_URL}/optimize/${run.id}/history`, {
+        headers: session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}
+      });
+      const histData = await histRes.json();
+      if (histData.trials && histData.trials.length > 0) {
+        setChartData(histData.trials);
+      } else {
+        setChartData([]);
+      }
+      router.push('/dashboard');
+    } catch (err) {
+      console.error("Failed to load run history:", err);
+      setChartData([]);
+      router.push('/dashboard');
+    }
+  };
 
   return (
     <div className="h-full w-full bg-white text-black font-sans flex flex-col overflow-y-auto custom-scrollbar">
@@ -13,7 +58,7 @@ export default function HistoryPage() {
       <header className="px-8 py-6 border-b border-slate-100 flex justify-between items-end bg-white shrink-0">
         <div>
           <h1 className="text-2xl font-bold tracking-tight mb-1 text-slate-900">Telemetry History</h1>
-          <p className="text-sm text-slate-500">View past optimization runs and their best parameters.</p>
+          <p className="text-sm text-slate-500">View past optimization runs and load them into your workspace.</p>
         </div>
       </header>
 
@@ -45,6 +90,7 @@ export default function HistoryPage() {
                     <th className="px-5 py-3 border-r border-slate-100 font-semibold">Status</th>
                     <th className="px-5 py-3 border-r border-slate-100 font-semibold text-right">Best Score</th>
                     <th className="px-5 py-3 border-r border-slate-100 font-semibold text-right">Duration</th>
+                    <th className="px-5 py-3 font-semibold text-center w-32">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -71,6 +117,24 @@ export default function HistoryPage() {
                       <td className="px-5 py-4 border-r border-slate-100 text-right font-mono text-slate-500 flex items-center justify-end gap-1.5">
                         <Clock size={12} className="text-slate-400" />
                         {run.time}
+                      </td>
+                      <td className="px-5 py-4 text-center">
+                        <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button 
+                            onClick={() => loadRunIntoWorkspace(run)}
+                            className="p-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-700 rounded-md transition-colors"
+                            title="Load in Workspace"
+                          >
+                            <Play size={14} className="fill-current" />
+                          </button>
+                          <button 
+                            onClick={(e) => deleteRun(e, run.id)}
+                            className="p-1.5 bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 rounded-md transition-colors"
+                            title="Delete Run"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
