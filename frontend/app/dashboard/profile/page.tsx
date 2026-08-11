@@ -3,10 +3,13 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Settings, Shield, Bell, CreditCard, Key, Server, Lock, Eye, EyeOff, Loader2, Info } from 'lucide-react';
 import { supabase } from '../../../lib/supabaseClient';
+import { useGlobalState } from '../GlobalStateContext';
 
 export default function ProfilePage() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { session } = useGlobalState();
+  const userName = session?.user?.user_metadata?.full_name || session?.user?.email?.split('@')[0] || 'User';
   
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -70,7 +73,7 @@ export default function ProfilePage() {
       {/* Header */}
       <header className="px-8 py-6 border-b border-slate-100 flex justify-between items-end bg-white shrink-0">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight mb-1 text-slate-900">Profile Settings</h1>
+          <h1 className="text-2xl font-bold tracking-tight mb-1 text-slate-900">Hi, {userName}</h1>
           <p className="text-sm text-slate-500">Manage your account security and preferences.</p>
         </div>
       </header>

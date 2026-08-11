@@ -10,6 +10,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { isSidebarCollapsed, session } = useGlobalState();
+  const userName = session?.user?.user_metadata?.full_name || session?.user?.email?.split('@')[0] || 'User';
 
   React.useEffect(() => {
     if (session === null) {
@@ -93,7 +94,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
           >
             <LogOut size={18} className="shrink-0" />
             <span className={`text-sm font-bold truncate transition-all duration-300 ${isSidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100'}`}>
-              Sign Out
+              Hi, {userName}
             </span>
           </button>
         </div>
