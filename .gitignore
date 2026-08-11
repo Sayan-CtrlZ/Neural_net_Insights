@@ -12,3 +12,7 @@ __pycache__/
 *.pyc
 venv/
 .env
+
+# Temporary setup scripts
+frontend/fix_landing.py
+frontend/add_dark_mode.py
