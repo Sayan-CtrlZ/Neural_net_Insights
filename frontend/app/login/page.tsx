@@ -2,10 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabaseClient';
-import { BrainCircuit, Mail, Loader2, ArrowRight, ShieldCheck } from 'lucide-react';
+import { BrainCircuit, Mail, Loader2, ArrowRight, ShieldCheck, User } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'email' | 'otp'>('email');
@@ -32,6 +33,9 @@ export default function LoginPage() {
         email,
         options: {
           shouldCreateUser: true,
+          data: {
+            full_name: name,
+          }
         }
       });
       if (error) throw error;
@@ -110,6 +114,23 @@ export default function LoginPage() {
 
           {step === 'email' ? (
             <form className="space-y-6" onSubmit={handleSendOtp}>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700">Full Name</label>
+                <div className="mt-2 relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                    <User size={18} />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                    placeholder="Jane Doe"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-semibold text-slate-700">Email address</label>
                 <div className="mt-2 relative">

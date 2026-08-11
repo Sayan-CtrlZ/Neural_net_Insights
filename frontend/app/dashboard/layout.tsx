@@ -13,18 +13,26 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     if (session === null) {
-      // Small timeout to allow initial session load to finish if it's just slow
-      const timer = setTimeout(() => {
-        if (!session) router.push('/login');
-      }, 500);
-      return () => clearTimeout(timer);
+      router.push('/login');
     }
   }, [session, router]);
+
+  if (session === undefined) {
+    return (
+      <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  if (session === null) {
+    return null;
+  }
 
   const navItems = [
     { name: 'Workspace', href: '/dashboard', icon: <LayoutDashboard size={18} /> },
     { name: 'History', href: '/dashboard/history', icon: <History size={18} /> },
-    { name: 'Settings', href: '/dashboard/settings', icon: <Settings size={18} /> },
+    { name: 'Profile', href: '/dashboard/profile', icon: <User size={18} /> },
   ];
 
   return (
@@ -75,29 +83,19 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
             <span className={`transition-all duration-300 ${isSidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100'}`}>Support</span>
           </a>
           
-          <div className={`flex items-center p-4 rounded-xl border border-slate-100 bg-white shadow-sm cursor-pointer hover:shadow-md hover:border-indigo-100 transition-all group ${isSidebarCollapsed ? 'justify-center' : 'gap-3'}`}>
-            <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center shrink-0">
-              <User size={18} className="text-indigo-600 group-hover:scale-110 transition-transform" />
-            </div>
-            <div className={`flex-1 overflow-hidden transition-all duration-300 ${isSidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100'}`}>
-              <p className="text-xs font-bold text-slate-900 truncate">
-                {session?.user?.email?.split('@')[0] || 'Loading...'}
-              </p>
-              <p className="text-[10px] text-slate-500 group-hover:text-slate-600 truncate">Pro Tier</p>
-            </div>
-            {!isSidebarCollapsed && (
-              <button 
-                onClick={async () => {
-                  await supabase.auth.signOut();
-                  router.push('/login');
-                }}
-                className="text-slate-400 hover:text-red-500 shrink-0 transition-colors p-1"
-                title="Sign out"
-              >
-                <LogOut size={16} />
-              </button>
-            )}
-          </div>
+          <button 
+            onClick={async () => {
+              await supabase.auth.signOut();
+              router.push('/login');
+            }}
+            className={`flex items-center w-full p-3 rounded-xl border border-red-100 bg-red-50 text-red-600 shadow-sm cursor-pointer hover:bg-red-100 transition-all ${isSidebarCollapsed ? 'justify-center' : 'gap-3'}`}
+            title="Sign out"
+          >
+            <LogOut size={18} className="shrink-0" />
+            <span className={`text-sm font-bold truncate transition-all duration-300 ${isSidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100'}`}>
+              Sign Out
+            </span>
+          </button>
         </div>
       </aside>
 

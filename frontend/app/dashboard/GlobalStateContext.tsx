@@ -34,7 +34,7 @@ interface GlobalStateContextType {
   setPreviewLimit: (limit: number) => void;
   isSidebarCollapsed: boolean;
   setIsSidebarCollapsed: (is: boolean) => void;
-  session: Session | null;
+  session: Session | null | undefined;
 }
 
 const GlobalStateContext = createContext<GlobalStateContextType | undefined>(undefined);
@@ -55,7 +55,7 @@ export function GlobalStateProvider({ children }: { children: ReactNode }) {
   const [isChartFullscreen, setIsChartFullscreen] = useState(false);
   const [previewLimit, setPreviewLimit] = useState<number>(15);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [session, setSession] = useState<Session | null>(null);
+  const [session, setSession] = useState<Session | null | undefined>(undefined);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
