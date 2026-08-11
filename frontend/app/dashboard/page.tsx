@@ -53,6 +53,14 @@ export default function Dashboard() {
     'Unknown': 'Unknown'
   };
 
+  const modelColorMap: Record<string, string> = {
+    'linreg': '#3B82F6',
+    'logreg': '#3B82F6',
+    'rf': '#10B981',
+    'xgb': '#F59E0B',
+    'Unknown': '#94A3B8'
+  };
+
   const modelLeaderboard = React.useMemo(() => {
     if (!chartData || chartData.length === 0) return [];
     const modelScores: Record<string, number> = {};
@@ -397,9 +405,15 @@ export default function Dashboard() {
                     <p>AWAITING_DATA</p>
                   </div>
                 ) : (
-                  <div className="w-full h-full overflow-x-auto overflow-y-hidden custom-scrollbar">
-                    <div style={{ minWidth: `${Math.max(100, chartData.length * 6)}%`, height: '100%' }}>
-                      <ResponsiveContainer width="100%" height="100%">
+                  <div className="w-full h-full flex flex-col">
+                    <div className="flex items-center gap-4 text-[10px] font-bold text-slate-500 mb-2 px-4 shrink-0">
+                      <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#3B82F6]"></span> Linear/Logistic</div>
+                      <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#10B981]"></span> Random Forest</div>
+                      <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#F59E0B]"></span> XGBoost</div>
+                    </div>
+                    <div className="w-full flex-1 overflow-x-auto overflow-y-hidden custom-scrollbar">
+                      <div style={{ minWidth: `${Math.max(100, chartData.length * 6)}%`, height: '100%' }}>
+                        <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 15 }}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                           <XAxis 
@@ -433,10 +447,18 @@ export default function Dashboard() {
                           <Line
                             type="monotone"
                             dataKey="value"
-                            stroke="#4F46E5"
+                            stroke="#E2E8F0"
                             strokeWidth={2}
-                            dot={{ r: 3, fill: '#4F46E5', strokeWidth: 0 }}
-                            activeDot={{ r: 5, fill: '#fff', stroke: '#4F46E5', strokeWidth: 2 }}
+                            dot={(props: any) => {
+                              const { cx, cy, payload } = props;
+                              const fill = modelColorMap[payload.model] || modelColorMap['Unknown'];
+                              return <circle key={`dot-${payload.number}`} cx={cx} cy={cy} r={4} fill={fill} stroke="#fff" strokeWidth={1.5} />;
+                            }}
+                            activeDot={(props: any) => {
+                              const { cx, cy, payload } = props;
+                              const fill = modelColorMap[payload.model] || modelColorMap['Unknown'];
+                              return <circle key={`active-dot-${payload.number}`} cx={cx} cy={cy} r={6} fill={fill} stroke="#fff" strokeWidth={2} />;
+                            }}
                           />
                         </LineChart>
                       </ResponsiveContainer>
@@ -679,9 +701,15 @@ export default function Dashboard() {
                     <p>AWAITING_DATA</p>
                   </div>
                 ) : (
-                  <div className="w-full h-full overflow-hidden">
-                    <div style={{ width: '100%', height: '100%' }}>
-                      <ResponsiveContainer width="100%" height="100%">
+                  <div className="w-full h-full flex flex-col">
+                    <div className="flex items-center justify-center gap-6 text-xs font-bold text-slate-500 mb-4 shrink-0">
+                      <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#3B82F6]"></span> Linear/Logistic Regression</div>
+                      <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#10B981]"></span> Random Forest</div>
+                      <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]"></span> XGBoost</div>
+                    </div>
+                    <div className="w-full flex-1 overflow-hidden">
+                      <div style={{ width: '100%', height: '100%' }}>
+                        <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={chartData} margin={{ top: 20, right: 30, left: 30, bottom: 20 }}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                           <XAxis 
@@ -715,10 +743,18 @@ export default function Dashboard() {
                           <Line
                             type="monotone"
                             dataKey="value"
-                            stroke="#4F46E5"
+                            stroke="#E2E8F0"
                             strokeWidth={3}
-                            dot={{ r: 4, fill: '#4F46E5', strokeWidth: 0 }}
-                            activeDot={{ r: 7, fill: '#fff', stroke: '#4F46E5', strokeWidth: 3 }}
+                            dot={(props: any) => {
+                              const { cx, cy, payload } = props;
+                              const fill = modelColorMap[payload.model] || modelColorMap['Unknown'];
+                              return <circle key={`fs-dot-${payload.number}`} cx={cx} cy={cy} r={5} fill={fill} stroke="#fff" strokeWidth={2} />;
+                            }}
+                            activeDot={(props: any) => {
+                              const { cx, cy, payload } = props;
+                              const fill = modelColorMap[payload.model] || modelColorMap['Unknown'];
+                              return <circle key={`fs-active-dot-${payload.number}`} cx={cx} cy={cy} r={8} fill={fill} stroke="#fff" strokeWidth={3} />;
+                            }}
                           />
                         </LineChart>
                       </ResponsiveContainer>
