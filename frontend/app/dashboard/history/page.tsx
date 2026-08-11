@@ -57,8 +57,8 @@ export default function HistoryPage() {
       {/* Header */}
       <header className="px-8 py-6 border-b border-slate-100 dark:border-[#2a2a2a] flex justify-between items-end bg-white dark:bg-[#121212] shrink-0">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight mb-1 text-slate-900 dark:text-white">Telemetry History</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 dark:text-slate-400 dark:text-slate-500">View past optimization runs and load them into your workspace.</p>
+          <h1 className="text-2xl font-bold tracking-tight mb-1 text-slate-900 dark:text-slate-100">Telemetry History</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">View past optimization runs and load them into your workspace.</p>
         </div>
       </header>
 
@@ -70,20 +70,20 @@ export default function HistoryPage() {
               <History size={16} className="text-indigo-600"/>
               <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100">Historical Runs</h2>
             </div>
-            <div className="flex items-center gap-2 text-xs font-mono font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 dark:text-slate-400 dark:text-slate-500 bg-white dark:bg-[#121212] px-2 py-1 rounded-md border border-slate-100 dark:border-[#2a2a2a]">
+            <div className="flex items-center gap-2 text-xs font-mono font-medium text-slate-500 dark:text-slate-500 bg-white dark:bg-[#121212] px-2 py-1 rounded-md border border-slate-100 dark:border-[#2a2a2a]">
               {runs.length} RUNS
             </div>
           </div>
           
           <div className="overflow-x-auto">
             {runs.length === 0 ? (
-              <div className="h-64 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 dark:text-slate-400 dark:text-slate-500 gap-3 font-mono text-sm">
+              <div className="h-64 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 gap-3 font-mono text-sm">
                 <Database size={32} className="opacity-50 text-slate-300" />
                 <p>NO_HISTORY_FOUND</p>
               </div>
             ) : (
               <table className="w-full text-sm text-left">
-                <thead className="bg-slate-50 dark:bg-[#1a1a1a] border-b border-slate-100 dark:border-[#2a2a2a] text-xs font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                <thead className="bg-slate-50 dark:bg-[#1a1a1a] border-b border-slate-100 dark:border-[#2a2a2a] text-xs font-semibold text-slate-500 dark:text-slate-400">
                   <tr>
                     <th className="px-5 py-3 border-r border-slate-100 dark:border-[#2a2a2a] font-semibold">Run ID</th>
                     <th className="px-5 py-3 border-r border-slate-100 dark:border-[#2a2a2a] font-semibold">Type</th>
@@ -93,15 +93,15 @@ export default function HistoryPage() {
                     <th className="px-5 py-3 font-semibold text-center w-32">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-[#2a2a2a]">
                   {runs.map((run, i) => (
-                    <tr key={run.id} className="hover:bg-slate-50 dark:bg-[#1a1a1a] transition-colors group">
+                    <tr key={run.id} className="hover:bg-slate-50 dark:hover:bg-[#1a1a1a] transition-colors group">
                       <td className="px-5 py-4 border-r border-slate-100 dark:border-[#2a2a2a] font-mono text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
                         <Activity size={14} className="text-indigo-500" />
                         {run.id}
                       </td>
                       <td className="px-5 py-4 border-r border-slate-100 dark:border-[#2a2a2a]">
-                        <span className="text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider">{run.type}</span>
+                        <span className="text-xs font-bold text-slate-500 dark:text-slate-500 uppercase tracking-wider">{run.type}</span>
                       </td>
                       <td className="px-5 py-4 border-r border-slate-100 dark:border-[#2a2a2a]">
                         <span className={`px-2 py-1 rounded-md text-xs font-bold ${
@@ -114,8 +114,8 @@ export default function HistoryPage() {
                       <td className="px-5 py-4 border-r border-slate-100 dark:border-[#2a2a2a] text-right font-mono font-bold text-slate-700 dark:text-slate-200">
                         {run.score}
                       </td>
-                      <td className="px-5 py-4 border-r border-slate-100 dark:border-[#2a2a2a] text-right font-mono text-slate-500 dark:text-slate-400 dark:text-slate-500 dark:text-slate-400 dark:text-slate-500 flex items-center justify-end gap-1.5">
-                        <Clock size={12} className="text-slate-400 dark:text-slate-500 dark:text-slate-400 dark:text-slate-500" />
+                      <td className="px-5 py-4 border-r border-slate-100 dark:border-[#2a2a2a] text-right font-mono text-slate-500 dark:text-slate-500 flex items-center justify-end gap-1.5">
+                        <Clock size={12} className="text-slate-400 dark:text-slate-400" />
                         {run.time}
                       </td>
                       <td className="px-5 py-4 text-center">
