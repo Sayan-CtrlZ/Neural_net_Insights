@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 runs = {}  # Fallback memory store if DB insert fails
+active_heartbeats = {}
 
 @router.post("/datasets/upload")
 async def upload_dataset(file: UploadFile = File(...), client: Client = Depends(get_auth_client)):
@@ -70,6 +71,9 @@ async def start_optimization(
             
     runs[run_id] = {"status": "running"}
     
+    import time
+    active_heartbeats[run_id] = time.time()
+    
     if background_tasks:
         background_tasks.add_task(
             run_optimization_background, 
@@ -81,10 +85,17 @@ async def start_optimization(
             target_column=target_column,
             storage_path=storage_path,
             runs_store=runs,
-            n_trials=n_trials
+            n_trials=n_trials,
+            heartbeats_store=active_heartbeats
         )
     
     return {"run_id": run_id}
+
+@router.post("/optimize/{run_id}/heartbeat")
+async def receive_heartbeat(run_id: str):
+    import time
+    active_heartbeats[run_id] = time.time()
+    return {"status": "ok"}
 
 @router.post("/optimize/{run_id}/cancel")
 async def cancel_optimization(run_id: str, client: Client = Depends(get_auth_client)):

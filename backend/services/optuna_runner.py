@@ -8,11 +8,29 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def objective(trial: optuna.Trial, X: pd.DataFrame, y: pd.Series, problem_type: str, run_id: str = None, runs_store: dict = None):
+def objective(
+    trial: optuna.Trial, 
+    X: pd.DataFrame, 
+    y: pd.Series, 
+    problem_type: str, 
+    run_id: str = None, 
+    runs_store: dict = None,
+    heartbeats_store: dict = None
+):
     # Check if run has been cancelled by user
     if runs_store and run_id and runs_store.get(run_id, {}).get("status") == "cancelled":
         trial.study.stop()
         raise optuna.TrialPruned("Optimization cancelled by user.")
+
+    # Check heartbeat timeout
+    if heartbeats_store and run_id:
+        import time
+        last_hb = heartbeats_store.get(run_id)
+        if last_hb and (time.time() - last_hb > 10.0):
+            if runs_store and run_id in runs_store:
+                runs_store[run_id]["status"] = "cancelled"
+            trial.study.stop()
+            raise optuna.TrialPruned("Optimization stopped due to client disconnect (heartbeat timeout).")
 
     if problem_type == "classification":
         model_name = trial.suggest_categorical("model", ["logreg", "rf", "xgb"])
@@ -57,7 +75,15 @@ def objective(trial: optuna.Trial, X: pd.DataFrame, y: pd.Series, problem_type: 
     score = cross_val_score(model, X, y, cv=3, scoring=scoring, error_score='raise').mean()
     return score
 
-def run_optimization_local(X: pd.DataFrame, y: pd.Series, problem_type: str, run_id: str, n_trials: int = 10, runs_store: dict = None):
+def run_optimization_local(
+    X: pd.DataFrame, 
+    y: pd.Series, 
+    problem_type: str, 
+    run_id: str, 
+    n_trials: int = 10, 
+    runs_store: dict = None,
+    heartbeats_store: dict = None
+):
     """
     Run Optuna optimization locally in-memory for testing purposes.
     """
@@ -85,7 +111,7 @@ def run_optimization_local(X: pd.DataFrame, y: pd.Series, problem_type: str, run
         study_name=f"study_{run_id}"
     )
     
-    study.optimize(lambda trial: objective(trial, X, y, problem_type, run_id, runs_store), n_trials=n_trials)
+    study.optimize(lambda trial: objective(trial, X, y, problem_type, run_id, runs_store, heartbeats_store), n_trials=n_trials)
     
     logger.info(f"Best trial score: {study.best_value}")
     logger.info(f"Best trial params: {study.best_params}")
@@ -101,7 +127,8 @@ def run_optimization_background(
     target_column: str, 
     storage_path: str, 
     runs_store: dict, 
-    n_trials: int = 15
+    n_trials: int = 15,
+    heartbeats_store: dict = None
 ):
     """
     Background task that downloads the dataset, runs Optuna, updates the database, and cleans up the dataset.
@@ -158,8 +185,19 @@ def run_optimization_background(
         X_processed_df = pd.DataFrame(X_processed)
         
         # Run optimization with user-defined trials
-        study = run_optimization_local(X_processed_df, y, problem_type, run_id, n_trials=n_trials, runs_store=runs_store)
+        study = run_optimization_local(
+            X_processed_df, 
+            y, 
+            problem_type, 
+            run_id, 
+            n_trials=n_trials, 
+            runs_store=runs_store,
+            heartbeats_store=heartbeats_store
+        )
         
+        if runs_store and runs_store.get(run_id, {}).get("status") == "cancelled":
+            raise Exception("Optimization stopped by user or client disconnect")
+
         # Update Supabase DB
         if client:
             client.table("runs").update({
@@ -177,14 +215,18 @@ def run_optimization_background(
         
     except Exception as e:
         logger.error(f"Run {run_id} failed: {e}")
+        status = "failed"
+        if runs_store and runs_store.get(run_id, {}).get("status") == "cancelled":
+            status = "failed" # will be stored as failed with cancelled message
+        
         if client:
             client.table("runs").update({
-                "status": "failed",
+                "status": status,
                 "error": str(e)
             }).eq("id", run_id).execute()
             
         runs_store[run_id] = {
-            "status": "failed",
+            "status": status,
             "error": str(e)
         }
     finally:
@@ -207,3 +249,30 @@ def run_optimization_background(
                 logger.info(f"Dataset {dataset_id} cleaned up successfully from DB and storage.")
             except Exception as cleanup_err:
                 logger.error(f"Failed to clean up dataset {dataset_id}: {cleanup_err}")
+
+        # Clean up telemetry data from database if the run is failed, stopped, or cancelled
+        run_status = runs_store.get(run_id, {}).get("status") if runs_store else None
+        if run_status != "completed":
+            try:
+                from core.config import settings
+                if settings.SUPABASE_DB_URI:
+                    import optuna
+                    storage = optuna.storages.RDBStorage(
+                        url=settings.SUPABASE_DB_URI,
+                        engine_kwargs={"pool_size": 5, "max_overflow": 0}
+                    )
+                    study_name = f"study_{run_id}"
+                    try:
+                        optuna.delete_study(study_name=study_name, storage=storage)
+                        logger.info(f"Optuna study {study_name} telemetry cleared from DB.")
+                    except KeyError:
+                        pass
+            except Exception as clear_err:
+                logger.error(f"Failed to clear telemetry study: {clear_err}")
+
+        # Clean up heartbeat dict
+        if heartbeats_store and run_id in heartbeats_store:
+            try:
+                del heartbeats_store[run_id]
+            except Exception:
+                pass

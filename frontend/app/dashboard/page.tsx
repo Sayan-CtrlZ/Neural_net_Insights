@@ -156,13 +156,42 @@ export default function Dashboard() {
       .sort((a, b) => b.score - a.score);
   }, [chartData]);
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
+  // Send heartbeat pings while optimization is running
+  useEffect(() => {
+    if (!activeRun?.id || activeRun.id === 'Starting...' || activeRun.status !== 'running') {
+      return;
+    }
+
+    const sendHeartbeat = async () => {
+      try {
+        await fetch(`${API_URL}/optimize/${activeRun.id}/heartbeat`, {
+          method: 'POST',
+          headers: session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}
+        });
+      } catch (err) {
+        console.error("Heartbeat ping failed:", err);
+      }
+    };
+
+    // Send immediately
+    sendHeartbeat();
+
+    // Set interval to send every 3 seconds
+    const interval = setInterval(sendHeartbeat, 3000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [activeRun?.id, activeRun?.status, API_URL, session]);
+
   const [showConfigPanel, setShowConfigPanel] = useState(true);
   const [isTelemetryLoading, setIsTelemetryLoading] = useState(false);
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
   useEffect(() => {
     const fetchRunHistoryAndDataset = async () => {

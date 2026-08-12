@@ -105,13 +105,15 @@ export default function HistoryPage() {
                       </td>
                       <td className="px-5 py-4 text-center">
                         <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button 
-                            onClick={() => loadRunIntoWorkspace(run)}
-                            className="p-1.5 bg-indigo-50 dark:bg-white/10 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-700 rounded-md transition-colors"
-                            title="Load in Workspace"
-                          >
-                            <Play size={14} className="fill-current" />
-                          </button>
+                          {run.status === 'completed' && (
+                            <button 
+                              onClick={() => loadRunIntoWorkspace(run)}
+                              className="p-1.5 bg-indigo-50 dark:bg-white/10 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-700 rounded-md transition-colors"
+                              title="Load in Workspace"
+                            >
+                              <Play size={14} className="fill-current" />
+                            </button>
+                          )}
                           <button 
                             onClick={(e) => deleteRun(e, run.id)}
                             className="p-1.5 bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-100 hover:text-red-600 rounded-md transition-colors"
