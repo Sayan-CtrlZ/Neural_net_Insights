@@ -154,7 +154,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans relative overflow-hidden">
+    <div className="min-h-screen bg-[#FAFAFA] dark:bg-[#000000] flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans relative overflow-hidden">
       
       {/* Back to Home Button */}
       <div className="absolute top-8 left-8 sm:top-12 sm:left-12 z-20">
@@ -178,7 +178,7 @@ export default function LoginPage() {
         <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
           Neural Net Insights
         </h2>
-        <p className="mt-2 text-center text-sm text-slate-500 dark:text-white/60 dark:text-white/40">
+        <p className="mt-2 text-center text-sm text-slate-500 dark:text-white/60">
           {step === 'login' && 'Sign in to access your models'}
           {step === 'signup' && 'Create a new account'}
           {step === 'signup_verify' && 'Enter the verification code'}
@@ -217,7 +217,7 @@ export default function LoginPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="block w-full dark:bg-[#1a1a1a] dark:text-white pl-10 pr-3 py-2.5 border border-slate-200 dark:border-white/20 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                    className="block w-full bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white pl-10 pr-3 py-2.5 border border-slate-200 dark:border-white/20 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
                     placeholder="admin@example.com"
                   />
                 </div>
@@ -234,7 +234,7 @@ export default function LoginPage() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="block w-full dark:bg-[#1a1a1a] dark:text-white pl-10 pr-10 py-2.5 border border-slate-200 dark:border-white/20 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                    className="block w-full bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white pl-10 pr-10 py-2.5 border border-slate-200 dark:border-white/20 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
                     placeholder="••••••••"
                   />
                   <button
@@ -278,7 +278,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={handleGoogleLogin}
-                className="w-full flex justify-center items-center gap-3 py-2.5 px-4 border border-slate-200 dark:border-white/20 rounded-xl shadow-sm text-sm font-bold text-slate-700 dark:text-white/80 bg-white dark:bg-[#121212] hover:bg-slate-50 dark:bg-[#1a1a1a] hover:border-slate-300 transition-all"
+                className="w-full flex justify-center items-center gap-3 py-2.5 px-4 border border-slate-200 dark:border-white/20 rounded-xl shadow-sm text-sm font-bold text-slate-700 dark:text-white/80 bg-white dark:bg-[#121212] hover:bg-slate-50 dark:hover:bg-[#1a1a1a] hover:border-slate-300 transition-all"
               >
                 <svg viewBox="0 0 24 24" className="w-5 h-5">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -318,7 +318,7 @@ export default function LoginPage() {
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="block w-full dark:bg-[#1a1a1a] dark:text-white pl-10 pr-3 py-2.5 border border-slate-200 dark:border-white/20 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                    className="block w-full bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white pl-10 pr-3 py-2.5 border border-slate-200 dark:border-white/20 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
                     placeholder="Jane Doe"
                   />
                 </div>
@@ -335,7 +335,7 @@ export default function LoginPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="block w-full dark:bg-[#1a1a1a] dark:text-white pl-10 pr-3 py-2.5 border border-slate-200 dark:border-white/20 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                    className="block w-full bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white pl-10 pr-3 py-2.5 border border-slate-200 dark:border-white/20 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
                     placeholder="admin@example.com"
                   />
                 </div>
@@ -352,7 +352,7 @@ export default function LoginPage() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="block w-full dark:bg-[#1a1a1a] dark:text-white pl-10 pr-10 py-2.5 border border-slate-200 dark:border-white/20 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                    className="block w-full bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white pl-10 pr-10 py-2.5 border border-slate-200 dark:border-white/20 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
                     placeholder="••••••••"
                   />
                   <button
@@ -376,7 +376,7 @@ export default function LoginPage() {
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="block w-full dark:bg-[#1a1a1a] dark:text-white pl-10 pr-10 py-2.5 border border-slate-200 dark:border-white/20 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                    className="block w-full bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white pl-10 pr-10 py-2.5 border border-slate-200 dark:border-white/20 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
                     placeholder="••••••••"
                   />
                   <button
@@ -410,7 +410,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={handleGoogleLogin}
-                className="w-full flex justify-center items-center gap-3 py-2.5 px-4 border border-slate-200 dark:border-white/20 rounded-xl shadow-sm text-sm font-bold text-slate-700 dark:text-white/80 bg-white dark:bg-[#121212] hover:bg-slate-50 dark:bg-[#1a1a1a] hover:border-slate-300 transition-all"
+                className="w-full flex justify-center items-center gap-3 py-2.5 px-4 border border-slate-200 dark:border-white/20 rounded-xl shadow-sm text-sm font-bold text-slate-700 dark:text-white/80 bg-white dark:bg-[#121212] hover:bg-slate-50 dark:hover:bg-[#1a1a1a] hover:border-slate-300 transition-all"
               >
                 <svg viewBox="0 0 24 24" className="w-5 h-5">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -447,7 +447,7 @@ export default function LoginPage() {
                     required
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
-                    className="block w-full dark:bg-[#1a1a1a] dark:text-white pl-10 pr-3 py-2.5 border border-slate-200 dark:border-white/20 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none text-center tracking-widest font-mono font-bold"
+                    className="block w-full bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white pl-10 pr-3 py-2.5 border border-slate-200 dark:border-white/20 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none text-center tracking-widest font-mono font-bold"
                     placeholder="123456"
                     maxLength={6}
                   />
@@ -492,7 +492,7 @@ export default function LoginPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="block w-full dark:bg-[#1a1a1a] dark:text-white pl-10 pr-3 py-2.5 border border-slate-200 dark:border-white/20 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                    className="block w-full bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white pl-10 pr-3 py-2.5 border border-slate-200 dark:border-white/20 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
                     placeholder="admin@example.com"
                   />
                 </div>

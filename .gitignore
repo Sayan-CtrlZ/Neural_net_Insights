@@ -13,9 +13,3 @@ __pycache__/
 venv/
 .env
 
-# Temporary setup scripts
-frontend/fix_landing.py
-frontend/add_dark_mode.py
-frontend/add_login_dark_mode.py
-frontend/fix_dashboard_dark.py
-frontend/fix_recharts_axis.py
