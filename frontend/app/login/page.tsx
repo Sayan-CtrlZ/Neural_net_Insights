@@ -73,7 +73,7 @@ export default function LoginPage() {
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -83,6 +83,13 @@ export default function LoginPage() {
       });
       
       if (error) throw error;
+
+      if (data?.session) {
+        // If email confirmation is disabled in Supabase, the user is logged in immediately
+        router.push('/dashboard');
+        return;
+      }
+
       setStep('signup_verify');
       setMessage('A secure one-time password has been sent to your email to verify your account.');
     } catch (err: any) {

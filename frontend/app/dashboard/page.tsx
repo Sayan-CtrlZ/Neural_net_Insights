@@ -248,11 +248,10 @@ export default function Dashboard() {
           >
             <PanelLeft size={18} />
           </button>
-          <div className="flex items-center gap-3 font-bold text-slate-800 dark:text-white ml-2 border-l border-slate-300 pl-4">
-            <div className="w-7 h-7 shrink-0 rounded-md bg-gradient-to-br from-indigo-500 to-violet-600 shadow-indigo-500/20 shadow-md flex items-center justify-center text-white">
-              <BrainCircuit size={14} />
-            </div>
-            Neural Net Insights
+          <div className="flex items-center gap-2 ml-2 border-l border-slate-200 dark:border-white/10 pl-4">
+            <span className="text-sm font-semibold text-slate-700 dark:text-white/80">
+              Hi, {session?.user?.user_metadata?.full_name?.split(' ')[0] || session?.user?.email?.split('@')[0] || 'there'} 👋
+            </span>
           </div>
         </div>
         
@@ -276,7 +275,7 @@ export default function Dashboard() {
       <PanelGroup orientation="horizontal" className="flex-1">
 
         {/* Left Pane: Config and Status */}
-        <Panel panelRef={leftPanelRef} collapsible={true} collapsedSize={0} defaultSize={65} minSize={40} className="h-full flex flex-col overflow-y-auto custom-scrollbar">
+        <Panel panelRef={leftPanelRef} collapsible={true} collapsedSize={0} defaultSize={65} minSize={40} className="h-full flex flex-col overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
 
           <header className="px-6 py-4 border-b border-slate-100 dark:border-white/10 flex justify-between items-end bg-white dark:bg-[#0d0d0d] shrink-0">
           <div>
@@ -587,7 +586,7 @@ export default function Dashboard() {
       </Panel>
 
       {/* Resize Handle */}
-      <PanelResizeHandle className="w-px bg-slate-100 dark:bg-white/10 hover:bg-indigo-400 cursor-col-resize transition-colors shrink-0 z-10" />
+      <PanelResizeHandle className="w-px bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-300 dark:hover:bg-white/20 cursor-col-resize transition-colors shrink-0" />
 
       {/* Right Pane: Data Preview */}
       <Panel panelRef={rightPanelRef} collapsible={true} collapsedSize={0} defaultSize={35} minSize={20} className="h-full bg-white dark:bg-[#0d0d0d] flex flex-col border-l border-slate-100 dark:border-white/10">

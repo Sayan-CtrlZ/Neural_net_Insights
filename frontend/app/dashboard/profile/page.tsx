@@ -350,15 +350,20 @@ export default function ProfilePage() {
                       >
                         {loading ? <Loader2 size={12} className="animate-spin" /> : 'Save Password'}
                       </button>
-                      {!isRecovery && (
-                        <button
+                      <button
                           type="button"
-                          onClick={() => { setIsChangingPassword(false); setIsVerified(false); setPassword(''); setConfirmPassword(''); setError(null); }}
+                          onClick={() => {
+                            setIsChangingPassword(false);
+                            setIsVerified(false);
+                            setPassword('');
+                            setConfirmPassword('');
+                            setError(null);
+                            if (isRecovery) router.replace('/dashboard/profile');
+                          }}
                           className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-500 dark:text-white/50 hover:bg-slate-100 dark:hover:bg-white/10 transition-all"
                         >
                           Cancel
                         </button>
-                      )}
                     </div>
                   </form>
                 )}
