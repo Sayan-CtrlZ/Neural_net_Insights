@@ -411,7 +411,9 @@ export default function Dashboard() {
           headers: session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}
         });
         const histData = await histRes.json();
-        if (histData.trials && histData.trials.length > 0) setChartData(histData.trials);
+        // Always overwrite chartData (even with []) so stale data from a
+        // previously loaded history run doesn't bleed into the new run's graph
+        setChartData(histData.trials && histData.trials.length > 0 ? histData.trials : []);
 
         if (data.status === 'completed' || data.status === 'failed' || data.status === 'cancelled') {
           setRuns(prev => {
