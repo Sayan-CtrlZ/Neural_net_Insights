@@ -37,17 +37,17 @@ def objective(
         
         if model_name == "logreg":
             C = trial.suggest_float("C", 1e-3, 10, log=True)
-            model = LogisticRegression(C=C, max_iter=1000)
+            model = LogisticRegression(C=C, max_iter=500, n_jobs=1)
             
         elif model_name == "rf":
-            n_estimators = trial.suggest_int("n_estimators", 50, 300)
-            max_depth = trial.suggest_int("max_depth", 3, 20)
-            model = RandomForestClassifier(n_estimators=n_estimators, max_depth=max_depth)
+            n_estimators = trial.suggest_int("n_estimators", 20, 80)
+            max_depth = trial.suggest_int("max_depth", 3, 10)
+            model = RandomForestClassifier(n_estimators=n_estimators, max_depth=max_depth, n_jobs=1)
             
         else:
             eta = trial.suggest_float("eta", 0.01, 0.3, log=True)
-            max_depth = trial.suggest_int("max_depth", 3, 10)
-            model = XGBClassifier(learning_rate=eta, max_depth=max_depth, eval_metric="logloss")
+            max_depth = trial.suggest_int("max_depth", 3, 6)
+            model = XGBClassifier(n_estimators=50, learning_rate=eta, max_depth=max_depth, eval_metric="logloss", n_jobs=1)
             
         scoring = "accuracy"
         
@@ -55,25 +55,30 @@ def objective(
         model_name = trial.suggest_categorical("model", ["linreg", "rf", "xgb"])
         
         if model_name == "linreg":
-            model = LinearRegression()
+            model = LinearRegression(n_jobs=1)
             
         elif model_name == "rf":
-            n_estimators = trial.suggest_int("n_estimators", 50, 300)
-            max_depth = trial.suggest_int("max_depth", 3, 20)
-            model = RandomForestRegressor(n_estimators=n_estimators, max_depth=max_depth)
+            n_estimators = trial.suggest_int("n_estimators", 20, 80)
+            max_depth = trial.suggest_int("max_depth", 3, 10)
+            model = RandomForestRegressor(n_estimators=n_estimators, max_depth=max_depth, n_jobs=1)
             
         else:
             eta = trial.suggest_float("eta", 0.01, 0.3, log=True)
-            max_depth = trial.suggest_int("max_depth", 3, 10)
-            model = XGBRegressor(learning_rate=eta, max_depth=max_depth)
+            max_depth = trial.suggest_int("max_depth", 3, 6)
+            model = XGBRegressor(n_estimators=50, learning_rate=eta, max_depth=max_depth, n_jobs=1)
             
         scoring = "r2"
     else:
         raise ValueError(f"Unknown problem_type: {problem_type}")
 
-    # Compute cross-validated score
-    score = cross_val_score(model, X, y, cv=3, scoring=scoring, error_score='raise').mean()
-    return score
+    # Compute cross-validated score with proper memory cleanup
+    try:
+        score = cross_val_score(model, X, y, cv=3, scoring=scoring, error_score='raise').mean()
+        return score
+    finally:
+        del model
+        import gc
+        gc.collect()
 
 def run_optimization_local(
     X: pd.DataFrame, 
@@ -147,10 +152,23 @@ def run_optimization_background(
         # Load via chunking and downcasting
         df = load_dataset(temp_file_path)
         
-        # Preprocessing (impute, encode, scale)
+        # Check target column exists
         if target_column not in df.columns:
             raise ValueError(f"Target column '{target_column}' not found in dataset")
             
+        # Downsample dataset to maximum 20,000 rows for memory scaling on 512MB RAM
+        if len(df) > 20000:
+            logger.info(f"Dataset has {len(df)} rows. Downsampling to 20,000 rows for memory efficiency during optimization.")
+            if problem_type == 'classification':
+                try:
+                    from sklearn.model_selection import train_test_split
+                    # downsample keeping class ratio
+                    df, _ = train_test_split(df, train_size=20000, stratify=df[target_column], random_state=42)
+                except Exception:
+                    df = df.sample(n=20000, random_state=42)
+            else:
+                df = df.sample(n=20000, random_state=42)
+
         y = df[target_column]
         X = df.drop(columns=[target_column])
         
@@ -161,28 +179,44 @@ def run_optimization_background(
         
         # Simple automatic preprocessing
         from sklearn.impute import SimpleImputer
-        from sklearn.preprocessing import StandardScaler, OneHotEncoder
+        from sklearn.preprocessing import StandardScaler, OneHotEncoder, OrdinalEncoder
         from sklearn.compose import ColumnTransformer
         from sklearn.pipeline import Pipeline
         
         numeric_cols = X.select_dtypes(include=['number']).columns
         categorical_cols = X.select_dtypes(exclude=['number']).columns
         
-        preprocessor = ColumnTransformer(
-            transformers=[
-                ('num', Pipeline([
-                    ('imputer', SimpleImputer(strategy='median')),
-                    ('scaler', StandardScaler())
-                ]), numeric_cols),
-                ('cat', Pipeline([
-                    ('imputer', SimpleImputer(strategy='most_frequent')),
-                    ('encoder', OneHotEncoder(handle_unknown='ignore', sparse_output=False))
-                ]), categorical_cols)
-            ]
-        )
+        # Categorize by cardinality to save memory and avoid dense matrix explosion
+        low_card_cols = [col for col in categorical_cols if X[col].nunique() <= 10]
+        high_card_cols = [col for col in categorical_cols if X[col].nunique() > 10]
+        
+        transformers = []
+        if len(numeric_cols) > 0:
+            transformers.append(('num', Pipeline([
+                ('imputer', SimpleImputer(strategy='median')),
+                ('scaler', StandardScaler())
+            ]), numeric_cols))
+            
+        if len(low_card_cols) > 0:
+            transformers.append(('cat_low', Pipeline([
+                ('imputer', SimpleImputer(strategy='most_frequent')),
+                ('encoder', OneHotEncoder(handle_unknown='ignore', sparse_output=False))
+            ]), low_card_cols))
+            
+        if len(high_card_cols) > 0:
+            transformers.append(('cat_high', Pipeline([
+                ('imputer', SimpleImputer(strategy='most_frequent')),
+                ('encoder', OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-1))
+            ]), high_card_cols))
+            
+        preprocessor = ColumnTransformer(transformers=transformers)
         
         X_processed = preprocessor.fit_transform(X)
-        X_processed_df = pd.DataFrame(X_processed)
+        if hasattr(X_processed, "toarray"):
+            X_processed = X_processed.toarray()
+            
+        # Convert to float32 to reduce memory footprint by 50%
+        X_processed_df = pd.DataFrame(X_processed).astype('float32')
         
         # Run optimization with user-defined trials
         study = run_optimization_local(
