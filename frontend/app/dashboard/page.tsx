@@ -114,7 +114,7 @@ export default function Dashboard() {
   const rightPanelRef = React.useRef<PanelImperativeHandle>(null);
 
   useEffect(() => {
-    if (file) {
+    if (file && (typeof File !== 'undefined' && file instanceof File)) {
       Papa.parse(file, {
         header: true,
         preview: previewLimit === 0 ? undefined : previewLimit,
@@ -885,7 +885,7 @@ export default function Dashboard() {
                       }} 
                       className="px-3 py-2 border-r border-b border-slate-100 dark:border-white/10 text-center text-[10px] font-semibold sticky left-0 z-30 bg-slate-100 dark:bg-[#1a1a1a]"
                     >
-                      &nbsp;
+                      1
                       {/* Column Resize Handle */}
                       <div 
                         onMouseDown={(e) => handleColResizeStart(e, '__index')}
@@ -930,7 +930,7 @@ export default function Dashboard() {
                         }} 
                         className="px-3 py-1 border-r border-b border-slate-100 dark:border-white/10 text-slate-400 dark:text-white/30 text-center text-[10px] font-mono sticky left-0 z-10 bg-white dark:bg-[#0d0d0d] group-hover:bg-slate-50 dark:group-hover:bg-[#171717] transition-colors"
                       >
-                        {i + 1}
+                        {i + 2}
                         {/* Row Resize Handle */}
                         <div 
                           onMouseDown={(e) => handleRowResizeStart(e, i)}
