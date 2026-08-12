@@ -1,4 +1,7 @@
 'use client';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '../lib/supabaseClient';
 import Link from 'next/link';
 import { motion, Variants } from 'framer-motion';
 import ThemeToggle from './components/ThemeToggle';
@@ -18,6 +21,24 @@ const staggerContainer: Variants = {
 };
 
 export default function LandingPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        router.push('/dashboard');
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        router.push('/dashboard');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [router]);
+
   return (
     <div className="min-h-screen bg-transparent text-black dark:text-white selection:bg-indigo-500 selection:text-white font-sans overflow-hidden">
       

@@ -20,6 +20,16 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [nameLoading, setNameLoading] = useState(false);
+
+  useEffect(() => {
+    if (session?.user?.user_metadata?.full_name) {
+      setNewName(session.user.user_metadata.full_name);
+    }
+  }, [session]);
+
   const isRecovery = searchParams?.get('recovery') === 'true';
 
   useEffect(() => {
@@ -27,6 +37,24 @@ export default function ProfilePage() {
       setMessage('Please enter your new password below.');
     }
   }, [isRecovery]);
+
+  const handleUpdateName = async () => {
+    setNameLoading(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: { full_name: newName }
+      });
+      if (error) throw error;
+      setMessage('Name updated successfully! (Refresh to see changes globally)');
+      setIsEditingName(false);
+    } catch (err: any) {
+      setError(err.message || 'Failed to update name.');
+    } finally {
+      setNameLoading(false);
+    }
+  };
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,8 +129,31 @@ export default function ProfilePage() {
             <div className="p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-500 mb-1">Full Name</label>
-                  <p className="text-slate-900 font-medium">{session?.user?.user_metadata?.full_name || 'Not provided'}</p>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-semibold text-slate-500">Full Name</label>
+                    {!isEditingName && (
+                      <button onClick={() => setIsEditingName(true)} className="text-xs text-indigo-600 hover:text-indigo-700 font-semibold transition-colors">Edit</button>
+                    )}
+                  </div>
+                  {isEditingName ? (
+                    <div className="flex items-center gap-2 mt-1">
+                      <input 
+                        type="text" 
+                        value={newName} 
+                        onChange={(e) => setNewName(e.target.value)} 
+                        className="block w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                        placeholder="Your Name"
+                      />
+                      <button onClick={handleUpdateName} disabled={nameLoading} className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-indigo-700 transition-all disabled:opacity-50">
+                        {nameLoading ? <Loader2 size={14} className="animate-spin" /> : 'Save'}
+                      </button>
+                      <button onClick={() => { setIsEditingName(false); setNewName(session?.user?.user_metadata?.full_name || ''); }} disabled={nameLoading} className="bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-slate-200 transition-all">
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-slate-900 font-medium">{session?.user?.user_metadata?.full_name || 'Not provided'}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-500 mb-1">Email Address</label>
