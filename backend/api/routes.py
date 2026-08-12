@@ -85,6 +85,26 @@ async def start_optimization(
     
     return {"run_id": run_id}
 
+@router.post("/optimize/{run_id}/cancel")
+async def cancel_optimization(run_id: str, client: Client = Depends(get_auth_client)):
+    # 1. Update memory store flag to let background thread know it should stop
+    if run_id in runs:
+        runs[run_id]["status"] = "cancelled"
+    else:
+        runs[run_id] = {"status": "cancelled"}
+        
+    # 2. Update status in Supabase DB if available
+    if client:
+        try:
+            client.table("runs").update({
+                "status": "failed",
+                "error": "Cancelled by user"
+            }).eq("id", run_id).execute()
+        except Exception as e:
+            logger.error(f"Could not update status to cancelled: {e}")
+            
+    return {"message": "Optimization cancellation request received."}
+
 @router.get("/optimize/{run_id}/status")
 async def get_status(run_id: str, client: Client = Depends(get_auth_client)):
     if client:

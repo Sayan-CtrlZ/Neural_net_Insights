@@ -8,7 +8,12 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def objective(trial: optuna.Trial, X: pd.DataFrame, y: pd.Series, problem_type: str):
+def objective(trial: optuna.Trial, X: pd.DataFrame, y: pd.Series, problem_type: str, run_id: str = None, runs_store: dict = None):
+    # Check if run has been cancelled by user
+    if runs_store and run_id and runs_store.get(run_id, {}).get("status") == "cancelled":
+        trial.study.stop()
+        raise optuna.TrialPruned("Optimization cancelled by user.")
+
     if problem_type == "classification":
         model_name = trial.suggest_categorical("model", ["logreg", "rf", "xgb"])
         
@@ -52,7 +57,7 @@ def objective(trial: optuna.Trial, X: pd.DataFrame, y: pd.Series, problem_type: 
     score = cross_val_score(model, X, y, cv=3, scoring=scoring, error_score='raise').mean()
     return score
 
-def run_optimization_local(X: pd.DataFrame, y: pd.Series, problem_type: str, run_id: str, n_trials: int = 10):
+def run_optimization_local(X: pd.DataFrame, y: pd.Series, problem_type: str, run_id: str, n_trials: int = 10, runs_store: dict = None):
     """
     Run Optuna optimization locally in-memory for testing purposes.
     """
@@ -80,7 +85,7 @@ def run_optimization_local(X: pd.DataFrame, y: pd.Series, problem_type: str, run
         study_name=f"study_{run_id}"
     )
     
-    study.optimize(lambda trial: objective(trial, X, y, problem_type), n_trials=n_trials)
+    study.optimize(lambda trial: objective(trial, X, y, problem_type, run_id, runs_store), n_trials=n_trials)
     
     logger.info(f"Best trial score: {study.best_value}")
     logger.info(f"Best trial params: {study.best_params}")
@@ -144,7 +149,7 @@ def run_optimization_background(client, user_id: str, run_id: str, problem_type:
         X_processed_df = pd.DataFrame(X_processed)
         
         # Run optimization with user-defined trials
-        study = run_optimization_local(X_processed_df, y, problem_type, run_id, n_trials=n_trials)
+        study = run_optimization_local(X_processed_df, y, problem_type, run_id, n_trials=n_trials, runs_store=runs_store)
         
         # Clean up temp file
         if os.path.exists(temp_file_path):

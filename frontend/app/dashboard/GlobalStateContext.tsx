@@ -27,7 +27,7 @@ interface GlobalStateContextType {
   activeRunId: string | null;
   setActiveRunId: (id: string | null) => void;
   activeRun: any;
-  setActiveRun: (run: any) => void;
+  setActiveRun: (run: any | ((prev: any) => any)) => void;
   isChartFullscreen: boolean;
   setIsChartFullscreen: (is: boolean) => void;
   previewLimit: number;

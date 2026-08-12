@@ -4,7 +4,7 @@ import Papa from 'papaparse';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from 'next-themes';
-import { HardDrive, UploadCloud, Radar, Zap, Award, AlertCircle, Loader2, Maximize2, X, PanelLeftClose, PanelRightClose, PanelLeft, PanelRight, ChevronLeft, ChevronRight, Table, Activity, CheckCircle2, Database, Trash2, BrainCircuit } from 'lucide-react';
+import { HardDrive, UploadCloud, Radar, Zap, Award, AlertCircle, Loader2, Maximize2, X, XCircle, PanelLeftClose, PanelRightClose, PanelLeft, PanelRight, ChevronLeft, ChevronRight, Table, Activity, CheckCircle2, Database, Trash2, BrainCircuit } from 'lucide-react';
 import { Group as PanelGroup, Panel, Separator as PanelResizeHandle, PanelImperativeHandle } from "react-resizable-panels";
 import { useGlobalState } from './GlobalStateContext';
 import { supabase } from '../../lib/supabaseClient';
@@ -33,6 +33,82 @@ export default function Dashboard() {
   const [isMounted, setIsMounted] = useState(false);
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
+
+  const [colWidths, setColWidths] = useState<Record<string, number>>({});
+  const [rowHeights, setRowHeights] = useState<Record<number, number>>({});
+  const [headerHeight, setHeaderHeight] = useState<number>(32);
+
+  const handleColResizeStart = (e: React.MouseEvent, colName: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startWidth = colWidths[colName] || (colName === '__index' ? 50 : 120);
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const dx = moveEvent.clientX - startX;
+      setColWidths((prev: Record<string, number>) => ({
+        ...prev,
+        [colName]: Math.max(colName === '__index' ? 35 : 50, startWidth + dx)
+      }));
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const handleRowResizeStart = (e: React.MouseEvent, rowIndex: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startY = e.clientY;
+    const startHeight = rowHeights[rowIndex] || 28;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const dy = moveEvent.clientY - startY;
+      setRowHeights((prev: Record<number, number>) => ({
+        ...prev,
+        [rowIndex]: Math.max(20, startHeight + dy)
+      }));
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const handleHeaderRowResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startY = e.clientY;
+    const startHeight = headerHeight;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const dy = moveEvent.clientY - startY;
+      setHeaderHeight(Math.max(24, startHeight + dy));
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const totalTableWidth = React.useMemo(() => {
+    const idxWidth = colWidths['__index'] || 50;
+    const colsWidth = columns.reduce((acc, col) => acc + (colWidths[col] || 120), 0);
+    return idxWidth + colsWidth;
+  }, [columns, colWidths]);
 
   const leftPanelRef = React.useRef<PanelImperativeHandle>(null);
   const rightPanelRef = React.useRef<PanelImperativeHandle>(null);
@@ -149,23 +225,53 @@ export default function Dashboard() {
       }
     }
 
-    const formData = new FormData();
-    formData.append('dataset_id', datasetId);
-    formData.append('problem_type', problemType);
-    formData.append('target_column', targetColumn);
-    formData.append('storage_path', storagePath);
-    formData.append('n_trials', nTrials.toString());
+    // Set optimistic running state
+    const optimisticRunObj = { 
+      id: 'Starting...', 
+      status: 'running', 
+      dataset: file?.name || 'Dataset', 
+      score: '-', 
+      error: null, 
+      params: '',
+      n_trials: nTrials 
+    };
+    setActiveRun(optimisticRunObj);
+    setChartData([]);
 
-    const res = await fetch(`${API_URL}/optimize`, { 
-      method: 'POST', 
-      body: formData,
-      headers: session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}
-    });
-    const data = await res.json();
-    const runObj = { id: data.run_id, status: 'running', dataset: file?.name, score: '-', error: null, params: '' };
-    setActiveRun(runObj);
-    setActiveRunId(data.run_id);
-    pollStatus(data.run_id, runObj);
+    try {
+      const formData = new FormData();
+      formData.append('dataset_id', datasetId);
+      formData.append('problem_type', problemType);
+      formData.append('target_column', targetColumn);
+      formData.append('storage_path', storagePath);
+      formData.append('n_trials', nTrials.toString());
+
+      const res = await fetch(`${API_URL}/optimize`, { 
+        method: 'POST', 
+        body: formData,
+        headers: session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}
+      });
+      const data = await res.json();
+      
+      const runObj = { 
+        id: data.run_id, 
+        status: 'running', 
+        dataset: file?.name, 
+        score: '-', 
+        error: null, 
+        params: '',
+        n_trials: nTrials 
+      };
+      
+      // Update with true run ID and start polling
+      setActiveRun(runObj);
+      setActiveRunId(data.run_id);
+      pollStatus(data.run_id, runObj);
+    } catch (err) {
+      console.error(err);
+      setActiveRun(null);
+      alert('Failed to start model optimization. Is the backend running?');
+    }
   };
 
   const pollStatus = async (runId: string, initialRunObj: any) => {
@@ -194,7 +300,7 @@ export default function Dashboard() {
         const histData = await histRes.json();
         if (histData.trials && histData.trials.length > 0) setChartData(histData.trials);
 
-        if (data.status === 'completed' || data.status === 'failed') {
+        if (data.status === 'completed' || data.status === 'failed' || data.status === 'cancelled') {
           setRuns(prev => {
             if (prev.some(r => r.id === currentRunState.id)) return prev;
             return [currentRunState, ...prev];
@@ -210,6 +316,21 @@ export default function Dashboard() {
     };
 
     setTimeout(checkStatus, 3000);
+  };
+
+  const handleCancelRun = async (runId: string) => {
+    if (!runId || runId === 'Starting...') return;
+    try {
+      const res = await fetch(`${API_URL}/optimize/${runId}/cancel`, {
+        method: 'POST',
+        headers: session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}
+      });
+      if (res.ok) {
+        setActiveRun((prev: any) => prev ? { ...prev, status: 'failed', error: 'Cancelled by user' } : null);
+      }
+    } catch (err) {
+      console.error("Failed to cancel run:", err);
+    }
   };
 
   const loadRunIntoWorkspace = async (run: any) => {
@@ -294,22 +415,61 @@ export default function Dashboard() {
             </div>
 
             {activeRun && activeRun.status === 'running' ? (
-              <div className="p-8 h-[360px] flex flex-col items-center justify-center bg-slate-50 dark:bg-[#1a1a1a]">
+              <div className="p-8 min-h-[360px] flex flex-col items-center justify-center bg-slate-50 dark:bg-[#1a1a1a]/40 rounded-b-xl border-t border-slate-100 dark:border-white/10">
                 <div className="relative mb-6">
-                   <div className="w-16 h-16 border-4 border-indigo-100 dark:border-white/20 border-t-indigo-600 rounded-full animate-spin"></div>
+                   <div className="w-16 h-16 border-4 border-indigo-100 dark:border-white/10 border-t-indigo-600 rounded-full animate-spin"></div>
                    <div className="absolute inset-0 flex items-center justify-center">
                      <Zap size={20} className="text-indigo-600 animate-pulse" />
                    </div>
                 </div>
                 <h3 className="text-lg font-bold tracking-tight text-slate-800 dark:text-white">Optimization in Progress</h3>
-                <p className="text-sm text-slate-500 dark:text-white/40 font-mono mt-2">RUN_ID: {activeRun.id.split('-')[0]}</p>
+                <p className="text-xs text-slate-400 dark:text-white/40 font-mono mt-1 mb-6">RUN_ID: {activeRun.id.split('-')[0]}</p>
                 
-                {activeRun.score !== '-' && (
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6 px-6 py-3 border border-slate-200 dark:border-white/20 bg-white dark:bg-[#121212] shadow-sm rounded-xl flex items-center gap-4">
-                    <span className="text-xs font-bold text-slate-400 dark:text-white/40 uppercase tracking-widest">Current Best</span>
-                    <span className="text-indigo-600 font-mono font-bold text-xl">{activeRun.score}</span>
-                  </motion.div>
-                )}
+                {/* Real-time Trial Progress */}
+                <div className="w-72 max-w-full space-y-4">
+                  <div className="bg-white dark:bg-[#121212] border border-slate-200/60 dark:border-white/10 p-4 rounded-xl shadow-sm">
+                    <div className="flex justify-between items-center text-xs font-semibold text-slate-500 dark:text-white/50 mb-2">
+                      <span className="font-mono uppercase tracking-wider">Trial Progress</span>
+                      <span className="text-indigo-600 font-bold font-mono">
+                        {Math.min(chartData.length + 1, activeRun.n_trials || nTrials)} / {activeRun.n_trials || nTrials}
+                      </span>
+                    </div>
+                    <div className="w-full bg-slate-100 dark:bg-white/5 h-2 rounded-full overflow-hidden mb-3">
+                      <div 
+                        className="bg-indigo-600 h-full rounded-full transition-all duration-500" 
+                        style={{ width: `${Math.min(100, ((chartData.length) / (activeRun.n_trials || nTrials)) * 100)}%` }}
+                      />
+                    </div>
+                    
+                    {chartData.length > 0 ? (
+                      <div className="flex justify-between items-center text-[10px] text-slate-400 dark:text-white/30 font-semibold border-t border-slate-100 dark:border-white/5 pt-2">
+                        <span>LATEST MODEL:</span>
+                        <span className="text-slate-600 dark:text-white/60 uppercase font-mono">{chartData[chartData.length - 1]?.model}</span>
+                      </div>
+                    ) : (
+                      <div className="text-[10px] text-center text-slate-400 dark:text-white/30 font-semibold border-t border-slate-100 dark:border-white/5 pt-2">
+                        INITIALIZING_TRIAL_1
+                      </div>
+                    )}
+                  </div>
+
+                  {activeRun.score !== '-' && (
+                    <div className="flex items-center justify-between bg-white dark:bg-[#121212] border border-slate-200/60 dark:border-white/10 px-4 py-3 rounded-xl shadow-sm">
+                      <span className="text-[10px] font-bold text-slate-400 dark:text-white/40 uppercase tracking-widest">Current Best</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-mono font-bold text-base">{activeRun.score}</span>
+                    </div>
+                  )}
+
+                  <div className="flex justify-center pt-2">
+                    <button
+                      onClick={() => handleCancelRun(activeRun.id)}
+                      disabled={activeRun.id === 'Starting...'}
+                      className="text-xs font-bold text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 border border-red-200/60 dark:border-red-950/60 bg-white hover:bg-red-50 dark:bg-[#121212] dark:hover:bg-red-950/20 px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <XCircle size={14} /> Stop Optimization
+                    </button>
+                  </div>
+                </div>
               </div>
             ) : (
               <>
@@ -612,7 +772,7 @@ export default function Dashboard() {
           </div>
         </header>
 
-        <div className="flex-1 overflow-auto bg-white dark:bg-[#121212]">
+        <div className="flex-1 overflow-auto bg-white dark:bg-[#121212] excel-scrollbar">
           {previewData.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-white/40 gap-3 font-mono text-sm">
               <Database size={24} className="opacity-50 text-slate-300" />
@@ -620,25 +780,80 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="inline-block min-w-full align-middle">
-              <table className="min-w-full text-xs text-left border-separate border-spacing-0">
+              <table style={{ width: totalTableWidth }} className="table-fixed min-w-full text-xs text-left border-separate border-spacing-0">
                 <thead className="bg-slate-50 dark:bg-[#171717] text-slate-500 dark:text-white/40 sticky top-0 z-20">
-                  <tr>
-                    <th className="px-3 py-2 border-r border-b border-slate-100 dark:border-white/10 w-10 text-center text-[10px] font-semibold sticky left-0 z-30 bg-slate-100 dark:bg-[#1a1a1a]">#</th>
+                  <tr style={{ height: headerHeight }}>
+                    <th 
+                      style={{ 
+                        width: colWidths['__index'] || 50, 
+                        minWidth: colWidths['__index'] || 50, 
+                        maxWidth: colWidths['__index'] || 50,
+                        position: 'relative' 
+                      }} 
+                      className="px-3 py-2 border-r border-b border-slate-100 dark:border-white/10 text-center text-[10px] font-semibold sticky left-0 z-30 bg-slate-100 dark:bg-[#1a1a1a]"
+                    >
+                      &nbsp;
+                      {/* Column Resize Handle */}
+                      <div 
+                        onMouseDown={(e) => handleColResizeStart(e, '__index')}
+                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-indigo-500/50 active:bg-indigo-600 z-30 select-none"
+                      />
+                      {/* Row Resize Handle for Header */}
+                      <div 
+                        onMouseDown={handleHeaderRowResizeStart}
+                        className="absolute bottom-0 left-0 right-0 h-1 cursor-row-resize hover:bg-indigo-500/50 active:bg-indigo-600 z-30 select-none"
+                      />
+                    </th>
                     {columns.map(col => (
-                      <th key={col} className="px-3 py-2 border-r border-b border-slate-100 dark:border-white/10 text-[10px] font-semibold uppercase tracking-wider whitespace-nowrap bg-slate-50 dark:bg-[#171717]">
+                      <th 
+                        key={col} 
+                        style={{ 
+                          width: colWidths[col] || 120, 
+                          minWidth: colWidths[col] || 120, 
+                          maxWidth: colWidths[col] || 120,
+                          position: 'relative' 
+                        }} 
+                        className="px-3 py-2 border-r border-b border-slate-100 dark:border-white/10 text-[10px] font-semibold uppercase tracking-wider whitespace-nowrap overflow-hidden text-ellipsis bg-slate-50 dark:bg-[#171717]"
+                      >
                         {col}
+                        {/* Column Resize Handle */}
+                        <div 
+                          onMouseDown={(e) => handleColResizeStart(e, col)}
+                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-indigo-500/50 active:bg-indigo-600 z-30 select-none"
+                        />
                       </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody className="font-mono text-slate-700 dark:text-white/80">
                   {previewData.map((row, i) => (
-                    <tr key={i} className="hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors group">
-                      <td className="px-3 py-1 border-r border-b border-slate-100 dark:border-white/10 text-slate-400 dark:text-white/30 text-center text-[10px] font-mono sticky left-0 z-10 bg-white dark:bg-[#0d0d0d] group-hover:bg-slate-50 dark:group-hover:bg-[#171717] transition-colors">
+                    <tr key={i} style={{ height: rowHeights[i] || 28 }} className="hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors group">
+                      <td 
+                        style={{ 
+                          width: colWidths['__index'] || 50, 
+                          minWidth: colWidths['__index'] || 50, 
+                          maxWidth: colWidths['__index'] || 50,
+                          position: 'relative'
+                        }} 
+                        className="px-3 py-1 border-r border-b border-slate-100 dark:border-white/10 text-slate-400 dark:text-white/30 text-center text-[10px] font-mono sticky left-0 z-10 bg-white dark:bg-[#0d0d0d] group-hover:bg-slate-50 dark:group-hover:bg-[#171717] transition-colors"
+                      >
                         {i + 1}
+                        {/* Row Resize Handle */}
+                        <div 
+                          onMouseDown={(e) => handleRowResizeStart(e, i)}
+                          className="absolute bottom-0 left-0 right-0 h-1 cursor-row-resize hover:bg-indigo-500/50 active:bg-indigo-600 z-30 select-none"
+                        />
                       </td>
                       {columns.map(col => (
-                        <td key={col} className="px-3 py-1 border-r border-b border-slate-100 dark:border-white/10 whitespace-nowrap text-slate-600 dark:text-white/70 text-xs font-mono bg-white dark:bg-[#0d0d0d] group-hover:bg-slate-50 dark:group-hover:bg-[#171717] transition-colors">
+                        <td 
+                          key={col} 
+                          style={{ 
+                            width: colWidths[col] || 120, 
+                            minWidth: colWidths[col] || 120, 
+                            maxWidth: colWidths[col] || 120 
+                          }} 
+                          className="px-3 py-1 border-r border-b border-slate-100 dark:border-white/10 whitespace-nowrap overflow-hidden text-ellipsis text-slate-600 dark:text-white/70 text-xs font-mono bg-white dark:bg-[#0d0d0d] group-hover:bg-slate-50 dark:group-hover:bg-[#171717] transition-colors"
+                        >
                           {row[col] !== null && row[col] !== undefined ? String(row[col]) : ''}
                         </td>
                       ))}

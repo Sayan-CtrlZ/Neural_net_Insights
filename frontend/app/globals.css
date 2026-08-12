@@ -50,3 +50,38 @@ body {
 .dark ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.22);
 }
+
+/* Excel-style rectangular, minimal, thick scrollbar */
+.excel-scrollbar {
+  scrollbar-width: auto !important;
+}
+
+.excel-scrollbar::-webkit-scrollbar {
+  width: 10px !important;
+  height: 10px !important;
+}
+
+.excel-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.02) !important;
+}
+
+.dark .excel-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.01) !important;
+}
+
+.excel-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15) !important;
+  border-radius: 0px !important;
+}
+
+.dark .excel-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+.excel-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark .excel-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+}
