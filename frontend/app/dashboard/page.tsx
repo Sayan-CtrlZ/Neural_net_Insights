@@ -169,9 +169,15 @@ export default function Dashboard() {
       if (!activeRun?.id || activeRun.id === 'Starting...') return;
       
       // If the active run is currently running, the polling is already handled.
-      // But if it is completed or failed, we restore its telemetry and dataset.
+      // But if it is completed or failed, we restore its telemetry.
       if (activeRun.status !== 'running') {
         setIsTelemetryLoading(true);
+        // Clear previous dataset state since historical runs do not keep or load datasets
+        setFile(null);
+        setColumns([]);
+        setPreviewData([]);
+        setDatasetId('');
+        
         try {
           // 1. Fetch Optuna trial history
           const histRes = await fetch(`${API_URL}/optimize/${activeRun.id}/history`, {
@@ -184,7 +190,7 @@ export default function Dashboard() {
             setChartData([]);
           }
 
-          // 2. Fetch run configuration details from Supabase to load dataset
+          // 2. Fetch run configuration details from Supabase
           const { data: runData, error: runError } = await supabase
             .from('runs')
             .select('*')
@@ -194,39 +200,6 @@ export default function Dashboard() {
           if (!runError && runData) {
             setTargetColumn(runData.target_column || '');
             setProblemType(runData.problem_type || 'classification');
-            setDatasetId(runData.dataset_id || '');
-
-            // 3. Fetch corresponding dataset details and file
-            if (runData.dataset_id) {
-              const { data: datasetData, error: datasetError } = await supabase
-                .from('datasets')
-                .select('*')
-                .eq('id', runData.dataset_id)
-                .single();
-
-              if (!datasetError && datasetData && datasetData.storage_path) {
-                setStoragePath(datasetData.storage_path);
-                setFile({ name: datasetData.filename } as any);
-
-                // 4. Download and parse dataset contents from Supabase Storage
-                const { data: fileBlob, error: downloadError } = await supabase
-                  .storage
-                  .from('datasets')
-                  .download(datasetData.storage_path);
-
-                if (!downloadError && fileBlob) {
-                  const csvText = await fileBlob.text();
-                  Papa.parse(csvText, {
-                    header: true,
-                    preview: previewLimit === 0 ? undefined : previewLimit,
-                    complete: (results) => {
-                      if (results.meta.fields) setColumns(results.meta.fields);
-                      setPreviewData(results.data);
-                    }
-                  });
-                }
-              }
-            }
             setShowConfigPanel(false);
           }
         } catch (err) {

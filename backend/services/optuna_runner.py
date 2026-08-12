@@ -92,9 +92,19 @@ def run_optimization_local(X: pd.DataFrame, y: pd.Series, problem_type: str, run
     
     return study
 
-def run_optimization_background(client, user_id: str, run_id: str, problem_type: str, target_column: str, storage_path: str, runs_store: dict, n_trials: int = 15):
+def run_optimization_background(
+    client, 
+    user_id: str, 
+    run_id: str, 
+    dataset_id: str,
+    problem_type: str, 
+    target_column: str, 
+    storage_path: str, 
+    runs_store: dict, 
+    n_trials: int = 15
+):
     """
-    Background task that downloads the dataset, runs Optuna, and updates the database.
+    Background task that downloads the dataset, runs Optuna, updates the database, and cleans up the dataset.
     """
     logger.info(f"Starting background run {run_id} for user {user_id}")
     
@@ -102,6 +112,7 @@ def run_optimization_background(client, user_id: str, run_id: str, problem_type:
     from services.preprocessing import load_dataset
     import os
     
+    temp_file_path = None
     try:
         # Download dataset from Supabase Storage
         temp_file_path = download_dataset_to_temp(client, storage_path)
@@ -144,16 +155,10 @@ def run_optimization_background(client, user_id: str, run_id: str, problem_type:
         )
         
         X_processed = preprocessor.fit_transform(X)
-        # Convert back to DataFrame for Optuna runner which expects pd.DataFrame
-        # Get new column names from one-hot encoding if needed, or just use indices
         X_processed_df = pd.DataFrame(X_processed)
         
         # Run optimization with user-defined trials
         study = run_optimization_local(X_processed_df, y, problem_type, run_id, n_trials=n_trials, runs_store=runs_store)
-        
-        # Clean up temp file
-        if os.path.exists(temp_file_path):
-            os.remove(temp_file_path)
         
         # Update Supabase DB
         if client:
@@ -182,3 +187,23 @@ def run_optimization_background(client, user_id: str, run_id: str, problem_type:
             "status": "failed",
             "error": str(e)
         }
+    finally:
+        # Clean up temp file
+        if temp_file_path and os.path.exists(temp_file_path):
+            try:
+                os.remove(temp_file_path)
+            except Exception:
+                pass
+                
+        # Clean up database dataset record and storage file
+        if client and dataset_id:
+            try:
+                # 1. Nullify dataset_id in the run to avoid foreign key violation
+                client.table("runs").update({"dataset_id": None}).eq("id", run_id).execute()
+                # 2. Delete from datasets table
+                client.table("datasets").delete().eq("id", dataset_id).execute()
+                # 3. Delete file from storage
+                client.storage.from_("datasets").remove([storage_path])
+                logger.info(f"Dataset {dataset_id} cleaned up successfully from DB and storage.")
+            except Exception as cleanup_err:
+                logger.error(f"Failed to clean up dataset {dataset_id}: {cleanup_err}")

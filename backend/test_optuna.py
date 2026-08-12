@@ -8,11 +8,11 @@ if __name__ == "__main__":
     y = pd.Series(np.random.randint(0, 2, 100), name="target")
     
     print("Testing classification...")
-    study = run_optimization_local(X, y, problem_type="classification", n_trials=3)
+    study = run_optimization_local(X, y, problem_type="classification", run_id="test_run_classification", n_trials=3)
     
     # Create a small dummy regression dataset
     y_reg = pd.Series(np.random.randn(100), name="target")
     print("\nTesting regression...")
-    study_reg = run_optimization_local(X, y_reg, problem_type="regression", n_trials=3)
+    study_reg = run_optimization_local(X, y_reg, problem_type="regression", run_id="test_run_regression", n_trials=3)
     
     print("Optuna local test completed successfully!")

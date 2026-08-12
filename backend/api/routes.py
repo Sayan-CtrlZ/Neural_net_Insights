@@ -76,6 +76,7 @@ async def start_optimization(
             client=client,
             user_id=client.user.id,
             run_id=run_id, 
+            dataset_id=dataset_id,
             problem_type=problem_type, 
             target_column=target_column,
             storage_path=storage_path,
