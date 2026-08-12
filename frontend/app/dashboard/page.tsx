@@ -757,14 +757,16 @@ Generated on ${new Date().toLocaleString()} by Neural Net Insights.
                     >
                       <HardDrive size={11} /> {showConfigPanel ? 'Hide Config' : 'Show Config'}
                     </button>
-                    <button 
-                      onClick={handleRunNewModel}
-                      className="flex items-center gap-1 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:bg-slate-200/50 dark:hover:bg-white/5 px-2.5 py-1 rounded transition-colors"
-                      title="Start a new model optimization run"
-                    >
-                      <PlusCircle size={11} /> Run New Model
-                    </button>
-                    {activeRun && activeRun.id !== 'Starting...' && (
+                    {activeRun?.status !== 'running' && (
+                      <button 
+                        onClick={handleRunNewModel}
+                        className="flex items-center gap-1 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:bg-slate-200/50 dark:hover:bg-white/5 px-2.5 py-1 rounded transition-colors"
+                        title="Start a new model optimization run"
+                      >
+                        <PlusCircle size={11} /> Run New Model
+                      </button>
+                    )}
+                    {activeRun && activeRun.id !== 'Starting...' && activeRun.status !== 'running' && (
                       <button 
                         onClick={saveCurrentReport}
                         className="flex items-center gap-1 text-[10px] font-bold text-slate-600 dark:text-white/60 hover:bg-slate-200/50 dark:hover:bg-white/5 px-2.5 py-1 rounded transition-colors"
@@ -1029,7 +1031,7 @@ Generated on ${new Date().toLocaleString()} by Neural Net Insights.
                           maxWidth: colWidths[col] || 120,
                           position: 'relative' 
                         }} 
-                        className="px-3 py-2 border-r border-b border-slate-100 dark:border-white/10 text-[10px] font-semibold uppercase tracking-wider whitespace-nowrap overflow-hidden text-ellipsis bg-slate-50 dark:bg-[#171717]"
+                        className="px-3 py-2 border-r border-b border-slate-100 dark:border-white/10 text-[10px] font-semibold tracking-wider whitespace-nowrap overflow-hidden text-ellipsis bg-slate-50 dark:bg-[#171717]"
                       >
                         {col}
                         {/* Column Resize Handle */}
