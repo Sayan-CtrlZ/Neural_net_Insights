@@ -29,26 +29,11 @@ export default function HistoryPage() {
     }
   };
 
-  const loadRunIntoWorkspace = async (run: any) => {
+  const loadRunIntoWorkspace = (run: any) => {
+    setChartData([]);
     setActiveRunId(run.id);
     setActiveRun(run);
-    
-    try {
-      const histRes = await fetch(`${API_URL}/optimize/${run.id}/history`, {
-        headers: session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}
-      });
-      const histData = await histRes.json();
-      if (histData.trials && histData.trials.length > 0) {
-        setChartData(histData.trials);
-      } else {
-        setChartData([]);
-      }
-      router.push('/dashboard');
-    } catch (err) {
-      console.error("Failed to load run history:", err);
-      setChartData([]);
-      router.push('/dashboard');
-    }
+    router.push('/dashboard');
   };
 
   return (

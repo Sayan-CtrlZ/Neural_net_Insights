@@ -160,7 +160,83 @@ export default function Dashboard() {
     setIsMounted(true);
   }, []);
 
+  const [isTelemetryLoading, setIsTelemetryLoading] = useState(false);
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+
+  useEffect(() => {
+    const fetchRunHistoryAndDataset = async () => {
+      if (!activeRun?.id || activeRun.id === 'Starting...') return;
+      
+      // If the active run is currently running, the polling is already handled.
+      // But if it is completed or failed, we restore its telemetry and dataset.
+      if (activeRun.status !== 'running') {
+        setIsTelemetryLoading(true);
+        try {
+          // 1. Fetch Optuna trial history
+          const histRes = await fetch(`${API_URL}/optimize/${activeRun.id}/history`, {
+            headers: session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}
+          });
+          const histData = await histRes.json();
+          if (histData.trials && histData.trials.length > 0) {
+            setChartData(histData.trials);
+          } else {
+            setChartData([]);
+          }
+
+          // 2. Fetch run configuration details from Supabase to load dataset
+          const { data: runData, error: runError } = await supabase
+            .from('runs')
+            .select('*')
+            .eq('id', activeRun.id)
+            .single();
+
+          if (!runError && runData) {
+            setTargetColumn(runData.target_column || '');
+            setProblemType(runData.problem_type || 'classification');
+            setDatasetId(runData.dataset_id || '');
+
+            // 3. Fetch corresponding dataset details and file
+            if (runData.dataset_id) {
+              const { data: datasetData, error: datasetError } = await supabase
+                .from('datasets')
+                .select('*')
+                .eq('id', runData.dataset_id)
+                .single();
+
+              if (!datasetError && datasetData && datasetData.storage_path) {
+                setStoragePath(datasetData.storage_path);
+                setFile({ name: datasetData.filename } as any);
+
+                // 4. Download and parse dataset contents from Supabase Storage
+                const { data: fileBlob, error: downloadError } = await supabase
+                  .storage
+                  .from('datasets')
+                  .download(datasetData.storage_path);
+
+                if (!downloadError && fileBlob) {
+                  const csvText = await fileBlob.text();
+                  Papa.parse(csvText, {
+                    header: true,
+                    preview: previewLimit === 0 ? undefined : previewLimit,
+                    complete: (results) => {
+                      if (results.meta.fields) setColumns(results.meta.fields);
+                      setPreviewData(results.data);
+                    }
+                  });
+                }
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Failed to restore workspace session:", err);
+        } finally {
+          setIsTelemetryLoading(false);
+        }
+      }
+    };
+
+    fetchRunHistoryAndDataset();
+  }, [activeRun?.id, session?.access_token, previewLimit]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
@@ -569,6 +645,18 @@ export default function Dashboard() {
 
           {/* Visualization Module */}
           <div className="bg-white dark:bg-[#111111] border border-slate-100 dark:border-white/10 rounded-xl overflow-hidden relative">
+            {isTelemetryLoading && (
+              <div className="absolute inset-0 bg-white/85 dark:bg-[#111111]/85 backdrop-blur-md z-40 flex flex-col items-center justify-center transition-all duration-300">
+                <div className="relative mb-4">
+                  <div className="w-12 h-12 border-4 border-indigo-100 dark:border-white/10 border-t-indigo-600 rounded-full animate-spin"></div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Database size={16} className="text-indigo-600 animate-pulse" />
+                  </div>
+                </div>
+                <h3 className="text-sm font-bold tracking-tight text-slate-800 dark:text-white">Restoring Workspace Telemetry</h3>
+                <p className="text-xs text-slate-400 dark:text-white/40 font-mono mt-1 animate-pulse">LOADING_HISTORICAL_RUN_TRIAL_DATA...</p>
+              </div>
+            )}
             <div className="px-4 py-2.5 flex items-center justify-between border-b border-slate-100 dark:border-white/10 bg-slate-50/80 dark:bg-[#171717]">
               <div className="flex items-center gap-2">
                 <Radar size={13} className="text-slate-400 dark:text-white/40" />
@@ -772,8 +860,13 @@ export default function Dashboard() {
           </div>
         </header>
 
-        <div className="flex-1 overflow-auto bg-white dark:bg-[#121212] excel-scrollbar">
-          {previewData.length === 0 ? (
+        <div className="flex-1 overflow-auto bg-white dark:bg-[#121212] excel-scrollbar relative">
+          {isTelemetryLoading ? (
+            <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-white/40 gap-3 font-mono text-sm">
+              <div className="w-8 h-8 border-4 border-indigo-100 dark:border-white/10 border-t-indigo-600 rounded-full animate-spin"></div>
+              <p className="animate-pulse">LOADING_DATASET_PREVIEW...</p>
+            </div>
+          ) : previewData.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-white/40 gap-3 font-mono text-sm">
               <Database size={24} className="opacity-50 text-slate-300" />
               <p>NO_DATA_MOUNTED</p>
