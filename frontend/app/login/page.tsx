@@ -77,7 +77,8 @@ export default function LoginPage() {
         email,
         password,
         options: {
-          data: { full_name: name }
+          data: { full_name: name },
+          emailRedirectTo: `${window.location.origin}/verify-success`
         }
       });
       
@@ -129,9 +130,11 @@ export default function LoginPage() {
     clearMessages();
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/update-password`
+      });
       if (error) throw error;
-      setMessage('Password reset instructions have been sent to your email.');
+      setMessage('If an account exists with this email, a reset link has been sent.');
     } catch (err: any) {
       setError(err.message || 'Failed to send reset instructions.');
     } finally {
