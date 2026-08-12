@@ -5,14 +5,17 @@ ALTER TABLE runs DISABLE ROW LEVEL SECURITY;
 
 -- 2. Create an open policy for the Storage Bucket so anyone can upload and read
 -- (Storage objects always have RLS enabled by default)
+DROP POLICY IF EXISTS "Allow public uploads" ON storage.objects;
 CREATE POLICY "Allow public uploads" 
 ON storage.objects FOR INSERT 
 WITH CHECK (bucket_id = 'datasets');
 
+DROP POLICY IF EXISTS "Allow public reads" ON storage.objects;
 CREATE POLICY "Allow public reads" 
 ON storage.objects FOR SELECT 
 USING (bucket_id = 'datasets');
 
+DROP POLICY IF EXISTS "Allow public updates" ON storage.objects;
 CREATE POLICY "Allow public updates"
 ON storage.objects FOR UPDATE
 USING (bucket_id = 'datasets');
