@@ -112,6 +112,7 @@ export default function Dashboard() {
 
   const leftPanelRef = React.useRef<PanelImperativeHandle>(null);
   const rightPanelRef = React.useRef<PanelImperativeHandle>(null);
+  const pollingActiveRef = React.useRef<string | null>(null);
 
   useEffect(() => {
     if (file && (typeof File !== 'undefined' && file instanceof File)) {
@@ -190,12 +191,24 @@ export default function Dashboard() {
     };
   }, [activeRun?.id, activeRun?.status, API_URL, session]);
 
+  // Resume polling on mount if an optimization run is currently running
+  useEffect(() => {
+    if (activeRun && activeRun.id && activeRun.id !== 'Starting...' && activeRun.status === 'running') {
+      pollStatus(activeRun.id, activeRun);
+    }
+  }, [activeRun?.id, activeRun?.status]);
+
   const [showConfigPanel, setShowConfigPanel] = useState(true);
   const [isTelemetryLoading, setIsTelemetryLoading] = useState(false);
 
   useEffect(() => {
     const fetchRunHistoryAndDataset = async () => {
       if (!activeRun?.id || activeRun.id === 'Starting...') return;
+      
+      // If we already have chart data loaded for this active run, skip re-fetching to prevent flashing/disappearing
+      if (chartData && chartData.length > 0 && activeRun.status !== 'running') {
+        return;
+      }
       
       // If the active run is currently running, the polling is already handled.
       // But if it is completed or failed, we restore its telemetry.
@@ -356,9 +369,13 @@ export default function Dashboard() {
   };
 
   const pollStatus = async (runId: string, initialRunObj: any) => {
+    if (pollingActiveRef.current === runId) return;
+    pollingActiveRef.current = runId;
+    
     let currentRunState = { ...initialRunObj };
     
     const checkStatus = async () => {
+      if (pollingActiveRef.current !== runId) return;
       try {
         const res = await fetch(`${API_URL}/optimize/${runId}/status`, {
           headers: session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}
@@ -387,13 +404,16 @@ export default function Dashboard() {
             return [currentRunState, ...prev];
           });
           setActiveRun(null);
+          pollingActiveRef.current = null;
           return; // Stop polling
         }
       } catch (err) {
         console.error("Polling error:", err);
       }
       
-      setTimeout(checkStatus, 3000);
+      if (pollingActiveRef.current === runId) {
+        setTimeout(checkStatus, 3000);
+      }
     };
 
     setTimeout(checkStatus, 3000);
