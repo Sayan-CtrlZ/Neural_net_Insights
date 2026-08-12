@@ -4,7 +4,7 @@ import Papa from 'papaparse';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from 'next-themes';
-import { HardDrive, UploadCloud, Radar, Zap, Award, AlertCircle, Loader2, Maximize2, X, XCircle, PanelLeftClose, PanelRightClose, PanelLeft, PanelRight, ChevronLeft, ChevronRight, Table, Activity, CheckCircle2, Database, Trash2, BrainCircuit } from 'lucide-react';
+import { HardDrive, UploadCloud, Radar, Zap, Award, AlertCircle, Loader2, Maximize2, X, XCircle, PanelLeftClose, PanelRightClose, PanelLeft, PanelRight, ChevronLeft, ChevronRight, Table, Activity, CheckCircle2, Database, Trash2, BrainCircuit, PlusCircle, Save, Download } from 'lucide-react';
 import { Group as PanelGroup, Panel, Separator as PanelResizeHandle, PanelImperativeHandle } from "react-resizable-panels";
 import { useGlobalState } from './GlobalStateContext';
 import { supabase } from '../../lib/supabaseClient';
@@ -160,6 +160,7 @@ export default function Dashboard() {
     setIsMounted(true);
   }, []);
 
+  const [showConfigPanel, setShowConfigPanel] = useState(true);
   const [isTelemetryLoading, setIsTelemetryLoading] = useState(false);
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
@@ -226,6 +227,7 @@ export default function Dashboard() {
                 }
               }
             }
+            setShowConfigPanel(false);
           }
         } catch (err) {
           console.error("Failed to restore workspace session:", err);
@@ -313,6 +315,7 @@ export default function Dashboard() {
     };
     setActiveRun(optimisticRunObj);
     setChartData([]);
+    setShowConfigPanel(false);
 
     try {
       const formData = new FormData();
@@ -429,6 +432,113 @@ export default function Dashboard() {
     }
   };
 
+  const handleRunNewModel = () => {
+    setFile(null);
+    setColumns([]);
+    setPreviewData([]);
+    setTargetColumn('');
+    setProblemType('classification');
+    setDatasetId('');
+    setStoragePath('');
+    setChartData([]);
+    setActiveRunId(null);
+    setActiveRun(null);
+    setShowConfigPanel(true);
+  };
+
+  const saveCurrentReport = () => {
+    if (!activeRun) {
+      alert("No active optimization run to generate a report for.");
+      return;
+    }
+
+    const bestTrial = chartData.reduce((best, trial) => {
+      if (!best) return trial;
+      return trial.value > best.value ? trial : best;
+    }, null as any);
+
+    const reportContent = `# Neural Net Insights - Optimization Report
+==========================================
+
+## Run Overview
+- **Run ID**: ${activeRun.id}
+- **Status**: ${activeRun.status || 'completed'}
+- **Target Column**: ${targetColumn || 'N/A'}
+- **Problem Type**: ${problemType || 'N/A'}
+- **Total Trials**: ${chartData.length}
+
+## Best Performing Model
+- **Model Type**: ${activeRun.model || (bestTrial ? bestTrial.model : 'N/A')}
+- **Best Value (Metric Score)**: ${activeRun.score !== '-' ? activeRun.score : (bestTrial ? bestTrial.value.toFixed(4) : 'N/A')}
+- **Optimal Hyperparameters**:
+\`\`\`json
+${activeRun.params ? JSON.stringify(JSON.parse(activeRun.params), null, 2) : (bestTrial?.params ? JSON.stringify(bestTrial.params, null, 2) : '{}')}
+\`\`\`
+
+## Optimization Trial History
+${chartData.map((t, idx) => `Trial ${idx + 1}: Model = ${t.model || 'N/A'}, Score = ${t.value !== undefined && t.value !== null ? t.value.toFixed(4) : 'N/A'}`).join('\n')}
+
+Generated on ${new Date().toLocaleString()} by Neural Net Insights.
+`;
+
+    const blob = new Blob([reportContent], { type: 'text/markdown;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `optuna_report_${activeRun.id.split('-')[0]}.md`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
+
+  const exportChartAsPng = () => {
+    const svgElement = document.querySelector('.recharts-wrapper svg');
+    if (!svgElement) {
+      alert("Chart not found. Please make sure the telemetry chart is rendered.");
+      return;
+    }
+
+    const svgString = new XMLSerializer().serializeToString(svgElement);
+    let fullSvgString = svgString;
+    if (!svgString.includes('xmlns=')) {
+      fullSvgString = svgString.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+    }
+
+    const svgBlob = new Blob([fullSvgString], { type: 'image/svg+xml;charset=utf-8' });
+    const URL = window.URL || window.webkitURL || window;
+    const blobURL = URL.createObjectURL(svgBlob);
+    
+    const image = new Image();
+    image.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1600;
+      canvas.height = 800;
+      const context = canvas.getContext('2d');
+      if (context) {
+        const isDark = document.documentElement.classList.contains('dark');
+        context.fillStyle = isDark ? '#111111' : '#ffffff';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        
+        context.drawImage(image, 50, 50, canvas.width - 100, canvas.height - 100);
+        
+        context.fillStyle = isDark ? '#ffffff' : '#0f172a';
+        context.font = 'bold 24px sans-serif';
+        context.fillText('Neural Net Insights - Optuna Optimization Telemetry', 50, 45);
+        
+        const png = canvas.toDataURL('image/png');
+        const downloadLink = document.createElement('a');
+        downloadLink.href = png;
+        downloadLink.download = `neural_net_telemetry_${activeRunId || 'run'}.png`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+      }
+      URL.revokeObjectURL(blobURL);
+    };
+    image.src = blobURL;
+  };
+
   if (!isMounted) {
     return <div className="h-full w-full bg-white dark:bg-[#121212] flex items-center justify-center text-slate-400 dark:text-white/60 dark:text-white/40">Loading...</div>;
   }
@@ -484,164 +594,166 @@ export default function Dashboard() {
         <div className="p-8 space-y-8">
 
           {/* Configuration Module */}
-          <div className="bg-white dark:bg-[#111111] border border-slate-100 dark:border-white/10 rounded-xl overflow-hidden">
-            <div className="px-4 py-2.5 flex items-center gap-2 border-b border-slate-100 dark:border-white/10 bg-slate-50/80 dark:bg-[#171717]">
-              <HardDrive size={13} className="text-slate-400 dark:text-white/40" />
-              <h2 className="text-xs font-semibold text-slate-500 dark:text-white/50 uppercase tracking-wider">Data Ingestion</h2>
-            </div>
+          {showConfigPanel && (
+            <div className="bg-white dark:bg-[#111111] border border-slate-100 dark:border-white/10 rounded-xl overflow-hidden">
+              <div className="px-4 py-2.5 flex items-center gap-2 border-b border-slate-100 dark:border-white/10 bg-slate-50/80 dark:bg-[#171717]">
+                <HardDrive size={13} className="text-slate-400 dark:text-white/40" />
+                <h2 className="text-xs font-semibold text-slate-500 dark:text-white/50 uppercase tracking-wider">Data Ingestion</h2>
+              </div>
 
-            {activeRun && activeRun.status === 'running' ? (
-              <div className="p-8 min-h-[360px] flex flex-col items-center justify-center bg-slate-50 dark:bg-[#1a1a1a]/40 rounded-b-xl border-t border-slate-100 dark:border-white/10">
-                <div className="relative mb-6">
-                   <div className="w-16 h-16 border-4 border-indigo-100 dark:border-white/10 border-t-indigo-600 rounded-full animate-spin"></div>
-                   <div className="absolute inset-0 flex items-center justify-center">
-                     <Zap size={20} className="text-indigo-600 animate-pulse" />
-                   </div>
-                </div>
-                <h3 className="text-lg font-bold tracking-tight text-slate-800 dark:text-white">Optimization in Progress</h3>
-                <p className="text-xs text-slate-400 dark:text-white/40 font-mono mt-1 mb-6">RUN_ID: {activeRun.id.split('-')[0]}</p>
-                
-                {/* Real-time Trial Progress */}
-                <div className="w-72 max-w-full space-y-4">
-                  <div className="bg-white dark:bg-[#121212] border border-slate-200/60 dark:border-white/10 p-4 rounded-xl shadow-sm">
-                    <div className="flex justify-between items-center text-xs font-semibold text-slate-500 dark:text-white/50 mb-2">
-                      <span className="font-mono uppercase tracking-wider">Trial Progress</span>
-                      <span className="text-indigo-600 font-bold font-mono">
-                        {Math.min(chartData.length + 1, activeRun.n_trials || nTrials)} / {activeRun.n_trials || nTrials}
-                      </span>
-                    </div>
-                    <div className="w-full bg-slate-100 dark:bg-white/5 h-2 rounded-full overflow-hidden mb-3">
-                      <div 
-                        className="bg-indigo-600 h-full rounded-full transition-all duration-500" 
-                        style={{ width: `${Math.min(100, ((chartData.length) / (activeRun.n_trials || nTrials)) * 100)}%` }}
-                      />
-                    </div>
-                    
-                    {chartData.length > 0 ? (
-                      <div className="flex justify-between items-center text-[10px] text-slate-400 dark:text-white/30 font-semibold border-t border-slate-100 dark:border-white/5 pt-2">
-                        <span>LATEST MODEL:</span>
-                        <span className="text-slate-600 dark:text-white/60 uppercase font-mono">{chartData[chartData.length - 1]?.model}</span>
+              {activeRun && activeRun.status === 'running' ? (
+                <div className="p-8 min-h-[360px] flex flex-col items-center justify-center bg-slate-50 dark:bg-[#1a1a1a]/40 rounded-b-xl border-t border-slate-100 dark:border-white/10">
+                  <div className="relative mb-6">
+                     <div className="w-16 h-16 border-4 border-indigo-100 dark:border-white/10 border-t-indigo-600 rounded-full animate-spin"></div>
+                     <div className="absolute inset-0 flex items-center justify-center">
+                       <Zap size={20} className="text-indigo-600 animate-pulse" />
+                     </div>
+                  </div>
+                  <h3 className="text-lg font-bold tracking-tight text-slate-800 dark:text-white">Optimization in Progress</h3>
+                  <p className="text-xs text-slate-400 dark:text-white/40 font-mono mt-1 mb-6">RUN_ID: {activeRun.id.split('-')[0]}</p>
+                  
+                  {/* Real-time Trial Progress */}
+                  <div className="w-72 max-w-full space-y-4">
+                    <div className="bg-white dark:bg-[#121212] border border-slate-200/60 dark:border-white/10 p-4 rounded-xl shadow-sm">
+                      <div className="flex justify-between items-center text-xs font-semibold text-slate-500 dark:text-white/50 mb-2">
+                        <span className="font-mono uppercase tracking-wider">Trial Progress</span>
+                        <span className="text-indigo-600 font-bold font-mono">
+                          {Math.min(chartData.length + 1, activeRun.n_trials || nTrials)} / {activeRun.n_trials || nTrials}
+                        </span>
                       </div>
-                    ) : (
-                      <div className="text-[10px] text-center text-slate-400 dark:text-white/30 font-semibold border-t border-slate-100 dark:border-white/5 pt-2">
-                        INITIALIZING_TRIAL_1
+                      <div className="w-full bg-slate-100 dark:bg-white/5 h-2 rounded-full overflow-hidden mb-3">
+                        <div 
+                          className="bg-indigo-600 h-full rounded-full transition-all duration-500" 
+                          style={{ width: `${Math.min(100, ((chartData.length) / (activeRun.n_trials || nTrials)) * 100)}%` }}
+                        />
+                      </div>
+                      
+                      {chartData.length > 0 ? (
+                        <div className="flex justify-between items-center text-[10px] text-slate-400 dark:text-white/30 font-semibold border-t border-slate-100 dark:border-white/5 pt-2">
+                          <span>LATEST MODEL:</span>
+                          <span className="text-slate-600 dark:text-white/60 uppercase font-mono">{chartData[chartData.length - 1]?.model}</span>
+                        </div>
+                      ) : (
+                        <div className="text-[10px] text-center text-slate-400 dark:text-white/30 font-semibold border-t border-slate-100 dark:border-white/5 pt-2">
+                          INITIALIZING_TRIAL_1
+                        </div>
+                      )}
+                    </div>
+
+                    {activeRun.score !== '-' && (
+                      <div className="flex items-center justify-between bg-white dark:bg-[#121212] border border-slate-200/60 dark:border-white/10 px-4 py-3 rounded-xl shadow-sm">
+                        <span className="text-[10px] font-bold text-slate-400 dark:text-white/40 uppercase tracking-widest">Current Best</span>
+                        <span className="text-emerald-600 dark:text-emerald-400 font-mono font-bold text-base">{activeRun.score}</span>
                       </div>
                     )}
-                  </div>
 
-                  {activeRun.score !== '-' && (
-                    <div className="flex items-center justify-between bg-white dark:bg-[#121212] border border-slate-200/60 dark:border-white/10 px-4 py-3 rounded-xl shadow-sm">
-                      <span className="text-[10px] font-bold text-slate-400 dark:text-white/40 uppercase tracking-widest">Current Best</span>
-                      <span className="text-emerald-600 dark:text-emerald-400 font-mono font-bold text-base">{activeRun.score}</span>
+                    <div className="flex justify-center pt-2">
+                      <button
+                        onClick={() => handleCancelRun(activeRun.id)}
+                        disabled={activeRun.id === 'Starting...'}
+                        className="text-xs font-bold text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 border border-red-200/60 dark:border-red-950/60 bg-white hover:bg-red-50 dark:bg-[#121212] dark:hover:bg-red-950/20 px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <XCircle size={14} /> Stop Optimization
+                      </button>
                     </div>
-                  )}
+                  </div>
+                </div>
+              ) : (
+                <>
+              <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-white/80 mb-2">Upload Source</label>
+                  <label className="relative border-2 border-dashed border-slate-200 dark:border-white/20 bg-slate-50 dark:bg-[#1a1a1a] rounded-xl flex flex-col items-center justify-center hover:border-indigo-400 hover:bg-indigo-50 dark:bg-white/10 transition-all cursor-pointer group h-24">
+                    <input type="file" accept=".csv" onChange={handleFileUpload} className="hidden" />
+                    <AnimatePresence mode="wait">
+                      {isUploading ? (
+                        <motion.div key="uploading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
+                          <Loader2 className="animate-spin text-indigo-600" size={18} />
+                          <span className="text-sm font-medium text-slate-600">Parsing...</span>
+                        </motion.div>
+                      ) : file ? (
+                        <motion.div key="file" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
+                          <CheckCircle2 className="text-indigo-600" size={18} />
+                          <span className="text-sm font-medium text-indigo-700 truncate max-w-[150px]">{file.name}</span>
+                        </motion.div>
+                      ) : (
+                        <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2 text-slate-400 dark:text-white/40 group-hover:text-indigo-600">
+                          <UploadCloud size={18} />
+                          <span className="text-sm font-medium">Select CSV</span>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </label>
+                  
+                  <div className="mt-6 p-4 bg-indigo-50 dark:bg-white/10 border border-indigo-100 dark:border-white/20 rounded-xl space-y-2.5">
+                    <h3 className="text-[10px] font-bold text-indigo-900/60 dark:text-white/80 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Activity size={12}/> Enterprise Pipeline Active</h3>
+                    <div className="flex items-start gap-2 text-xs text-slate-700 dark:text-white/80">
+                      <CheckCircle2 size={14} className="text-emerald-500 mt-0.5 shrink-0"/>
+                      <p><strong className="text-slate-900 dark:text-white">Algorithm Search:</strong> Automatically evaluating Logistic Regression, Random Forest, and XGBoost.</p>
+                    </div>
+                    <div className="flex items-start gap-2 text-xs text-slate-700 dark:text-white/80">
+                      <CheckCircle2 size={14} className="text-emerald-500 mt-0.5 shrink-0"/>
+                      <p><strong className="text-slate-900 dark:text-white">Native Preprocessing:</strong> Automatic imputation, scaling, and OHE handled at ingestion.</p>
+                    </div>
+                    <div className="flex items-start gap-2 text-xs text-slate-700 dark:text-white/80">
+                      <CheckCircle2 size={14} className="text-emerald-500 mt-0.5 shrink-0"/>
+                      <p><strong className="text-slate-900 dark:text-white">Bayesian Optimization:</strong> TPE (Tree-structured Parzen Estimator) navigating hyperparameters.</p>
+                    </div>
+                  </div>
+                </div>
 
-                  <div className="flex justify-center pt-2">
-                    <button
-                      onClick={() => handleCancelRun(activeRun.id)}
-                      disabled={activeRun.id === 'Starting...'}
-                      className="text-xs font-bold text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 border border-red-200/60 dark:border-red-950/60 bg-white hover:bg-red-50 dark:bg-[#121212] dark:hover:bg-red-950/20 px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <XCircle size={14} /> Stop Optimization
-                    </button>
+                <div className="space-y-5">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-white/80 mb-2">Target Variable</label>
+                    <select value={targetColumn} onChange={e => setTargetColumn(e.target.value)} disabled={columns.length === 0}
+                      className="w-full bg-white dark:bg-[#121212] border border-slate-200 dark:border-white/20 p-2.5 rounded-xl text-sm font-medium text-slate-700 dark:text-white/80 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50 dark:bg-[#121212] disabled:bg-slate-50 dark:disabled:bg-[#1a1a1a] transition-all">
+                      <option value="">Select Target Column</option>
+                      {columns.map(col => <option key={col} value={col}>{col}</option>)}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-white/80 mb-2">Problem Domain</label>
+                    <div className="flex p-1 bg-slate-100 dark:bg-[#222222] rounded-xl">
+                      <button onClick={() => setProblemType('classification')} className={`flex-1 p-2 rounded-lg text-sm font-semibold transition-all ${problemType === 'classification' ? 'bg-white dark:bg-[#121212] text-indigo-700 shadow-sm' : 'text-slate-500 dark:text-white/40 hover:text-slate-700 dark:text-white/80'}`}>
+                        Classification
+                      </button>
+                      <button onClick={() => setProblemType('regression')} className={`flex-1 p-2 rounded-lg text-sm font-semibold transition-all ${problemType === 'regression' ? 'bg-white dark:bg-[#121212] text-indigo-700 shadow-sm' : 'text-slate-500 dark:text-white/40 hover:text-slate-700 dark:text-white/80'}`}>
+                        Regression
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="block text-sm font-semibold text-slate-700 dark:text-white/80">Optimization Trials</label>
+                      <span className="text-xs font-bold text-indigo-700 bg-indigo-50 dark:bg-white/10 px-2.5 py-1 rounded-md">{nTrials}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="1" max="50" step="1"
+                      value={nTrials}
+                      onChange={e => setNTrials(parseInt(e.target.value))}
+                      className="w-full cursor-pointer accent-indigo-600"
+                    />
+                    <p className="text-xs text-slate-500 dark:text-white/40 mt-2">Higher trials yield better accuracy but increase execution time.</p>
                   </div>
                 </div>
               </div>
-            ) : (
-              <>
-            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-white/80 mb-2">Upload Source</label>
-                <label className="relative border-2 border-dashed border-slate-200 dark:border-white/20 bg-slate-50 dark:bg-[#1a1a1a] rounded-xl flex flex-col items-center justify-center hover:border-indigo-400 hover:bg-indigo-50 dark:bg-white/10 transition-all cursor-pointer group h-24">
-                  <input type="file" accept=".csv" onChange={handleFileUpload} className="hidden" />
-                  <AnimatePresence mode="wait">
-                    {isUploading ? (
-                      <motion.div key="uploading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
-                        <Loader2 className="animate-spin text-indigo-600" size={18} />
-                        <span className="text-sm font-medium text-slate-600">Parsing...</span>
-                      </motion.div>
-                    ) : file ? (
-                      <motion.div key="file" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
-                        <CheckCircle2 className="text-indigo-600" size={18} />
-                        <span className="text-sm font-medium text-indigo-700 truncate max-w-[150px]">{file.name}</span>
-                      </motion.div>
-                    ) : (
-                      <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2 text-slate-400 dark:text-white/40 group-hover:text-indigo-600">
-                        <UploadCloud size={18} />
-                        <span className="text-sm font-medium">Select CSV</span>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </label>
-                
-                <div className="mt-6 p-4 bg-indigo-50 dark:bg-white/10 border border-indigo-100 dark:border-white/20 rounded-xl space-y-2.5">
-                  <h3 className="text-[10px] font-bold text-indigo-900/60 dark:text-white/80 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Activity size={12}/> Enterprise Pipeline Active</h3>
-                  <div className="flex items-start gap-2 text-xs text-slate-700 dark:text-white/80">
-                    <CheckCircle2 size={14} className="text-emerald-500 mt-0.5 shrink-0"/>
-                    <p><strong className="text-slate-900 dark:text-white">Algorithm Search:</strong> Automatically evaluating Logistic Regression, Random Forest, and XGBoost.</p>
-                  </div>
-                  <div className="flex items-start gap-2 text-xs text-slate-700 dark:text-white/80">
-                    <CheckCircle2 size={14} className="text-emerald-500 mt-0.5 shrink-0"/>
-                    <p><strong className="text-slate-900 dark:text-white">Native Preprocessing:</strong> Automatic imputation, scaling, and OHE handled at ingestion.</p>
-                  </div>
-                  <div className="flex items-start gap-2 text-xs text-slate-700 dark:text-white/80">
-                    <CheckCircle2 size={14} className="text-emerald-500 mt-0.5 shrink-0"/>
-                    <p><strong className="text-slate-900 dark:text-white">Bayesian Optimization:</strong> TPE (Tree-structured Parzen Estimator) navigating hyperparameters.</p>
-                  </div>
-                </div>
+
+              <div className="pt-2 pb-6 flex justify-center">
+                <button
+                  onClick={startRun}
+                  disabled={datasetId === '' || targetColumn === ''}
+                  className="bg-indigo-600 text-white px-8 py-3 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-indigo-700 shadow-md shadow-indigo-500/20 hover:shadow-indigo-500/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                >
+                  <Zap size={18} /> Start Model Optimization
+                </button>
               </div>
-
-              <div className="space-y-5">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-white/80 mb-2">Target Variable</label>
-                  <select value={targetColumn} onChange={e => setTargetColumn(e.target.value)} disabled={columns.length === 0}
-                    className="w-full bg-white dark:bg-[#121212] border border-slate-200 dark:border-white/20 p-2.5 rounded-xl text-sm font-medium text-slate-700 dark:text-white/80 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50 dark:bg-[#121212] disabled:bg-slate-50 dark:disabled:bg-[#1a1a1a] transition-all">
-                    <option value="">Select Target Column</option>
-                    {columns.map(col => <option key={col} value={col}>{col}</option>)}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-white/80 mb-2">Problem Domain</label>
-                  <div className="flex p-1 bg-slate-100 dark:bg-[#222222] rounded-xl">
-                    <button onClick={() => setProblemType('classification')} className={`flex-1 p-2 rounded-lg text-sm font-semibold transition-all ${problemType === 'classification' ? 'bg-white dark:bg-[#121212] text-indigo-700 shadow-sm' : 'text-slate-500 dark:text-white/40 hover:text-slate-700 dark:text-white/80'}`}>
-                      Classification
-                    </button>
-                    <button onClick={() => setProblemType('regression')} className={`flex-1 p-2 rounded-lg text-sm font-semibold transition-all ${problemType === 'regression' ? 'bg-white dark:bg-[#121212] text-indigo-700 shadow-sm' : 'text-slate-500 dark:text-white/40 hover:text-slate-700 dark:text-white/80'}`}>
-                      Regression
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <label className="block text-sm font-semibold text-slate-700 dark:text-white/80">Optimization Trials</label>
-                    <span className="text-xs font-bold text-indigo-700 bg-indigo-50 dark:bg-white/10 px-2.5 py-1 rounded-md">{nTrials}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="1" max="50" step="1"
-                    value={nTrials}
-                    onChange={e => setNTrials(parseInt(e.target.value))}
-                    className="w-full cursor-pointer accent-indigo-600"
-                  />
-                  <p className="text-xs text-slate-500 dark:text-white/40 mt-2">Higher trials yield better accuracy but increase execution time.</p>
-                </div>
-              </div>
+              </>
+              )}
             </div>
-
-            <div className="pt-2 pb-6 flex justify-center">
-              <button
-                onClick={startRun}
-                disabled={datasetId === '' || targetColumn === ''}
-                className="bg-indigo-600 text-white px-8 py-3 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-indigo-700 shadow-md shadow-indigo-500/20 hover:shadow-indigo-500/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
-              >
-                <Zap size={18} /> Start Model Optimization
-              </button>
-            </div>
-            </>
-            )}
-          </div>
+          )}
 
           {/* Visualization Module */}
           <div className="bg-white dark:bg-[#111111] border border-slate-100 dark:border-white/10 rounded-xl overflow-hidden relative">
@@ -662,13 +774,51 @@ export default function Dashboard() {
                 <Radar size={13} className="text-slate-400 dark:text-white/40" />
                 <h2 className="text-xs font-semibold text-slate-500 dark:text-white/50 uppercase tracking-wider">Telemetry</h2>
               </div>
-              <button 
-                onClick={() => setIsChartFullscreen(true)}
-                className="text-slate-300 dark:text-white/30 hover:text-slate-600 dark:hover:text-white/70 transition-colors p-1"
-                title="View Fullscreen"
-              >
-                <Maximize2 size={13} />
-              </button>
+              <div className="flex items-center gap-2">
+                {(!showConfigPanel || activeRun) && (
+                  <>
+                    <button 
+                      onClick={() => setShowConfigPanel(prev => !prev)}
+                      className="flex items-center gap-1 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:bg-slate-200/50 dark:hover:bg-white/5 px-2.5 py-1 rounded transition-colors"
+                      title={showConfigPanel ? "Hide parameters" : "Show parameters"}
+                    >
+                      <HardDrive size={11} /> {showConfigPanel ? 'Hide Config' : 'Show Config'}
+                    </button>
+                    <button 
+                      onClick={handleRunNewModel}
+                      className="flex items-center gap-1 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:bg-slate-200/50 dark:hover:bg-white/5 px-2.5 py-1 rounded transition-colors"
+                      title="Start a new model optimization run"
+                    >
+                      <PlusCircle size={11} /> Run New Model
+                    </button>
+                    {activeRun && activeRun.id !== 'Starting...' && (
+                      <button 
+                        onClick={saveCurrentReport}
+                        className="flex items-center gap-1 text-[10px] font-bold text-slate-600 dark:text-white/60 hover:bg-slate-200/50 dark:hover:bg-white/5 px-2.5 py-1 rounded transition-colors"
+                        title="Download Markdown summary report"
+                      >
+                        <Save size={11} /> Save Report
+                      </button>
+                    )}
+                    {chartData.length > 0 && (
+                      <button 
+                        onClick={exportChartAsPng}
+                        className="flex items-center gap-1 text-[10px] font-bold text-slate-600 dark:text-white/60 hover:bg-slate-200/50 dark:hover:bg-white/5 px-2.5 py-1 rounded transition-colors"
+                        title="Export telemetry graph as PNG"
+                      >
+                        <Download size={11} /> Export Graph
+                      </button>
+                    )}
+                  </>
+                )}
+                <button 
+                  onClick={() => setIsChartFullscreen(true)}
+                  className="text-slate-300 dark:text-white/30 hover:text-slate-600 dark:hover:text-white/70 transition-colors p-1"
+                  title="View Fullscreen"
+                >
+                  <Maximize2 size={13} />
+                </button>
+              </div>
             </div>
             <div className="flex flex-col lg:flex-row border-b border-gray-100 min-h-[350px]">
               <div className="flex-1 p-6 relative bg-white dark:bg-[#121212] border-r border-slate-100 dark:border-white/20 flex flex-col justify-center">
