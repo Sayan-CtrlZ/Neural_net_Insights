@@ -294,22 +294,37 @@ export default function Dashboard() {
 
     // PRE-FLIGHT VALIDATION
     if (previewData.length > 0) {
-      const isContinuous = previewData.some(row => {
-        const val = row[targetColumn];
-        if (val === undefined || val === null || val.trim() === '') return false;
-        const num = Number(val);
+      const targetValues = previewData
+        .map(row => row[targetColumn])
+        .filter(v => v !== undefined && v !== null && String(v).trim() !== '');
+
+      const isContinuous = targetValues.some(v => {
+        const num = Number(v);
         return !isNaN(num) && !Number.isInteger(num);
       });
 
-      const isCategoricalStr = previewData.some(row => {
-        const val = row[targetColumn];
-        if (val === undefined || val === null || val.trim() === '') return false;
-        return isNaN(Number(val));
-      });
+      const isCategoricalStr = targetValues.some(v => isNaN(Number(v)));
+
+      // Check if it's a high-cardinality integer column (likely a regression target, not classification)
+      const uniqueIntValues = new Set(targetValues.filter(v => {
+        const num = Number(v);
+        return !isNaN(num) && Number.isInteger(num);
+      }));
+      const isHighCardinalityInt = uniqueIntValues.size > 20;
 
       if (problemType === 'classification' && isContinuous) {
         alert("Validation Error: The target column contains continuous numerical data (decimals).\n\nClassification requires discrete categories (like classes or 0/1). Please change the Problem Domain to 'Regression'.");
         return;
+      }
+
+      if (problemType === 'classification' && isHighCardinalityInt && !isCategoricalStr) {
+        const proceed = window.confirm(
+          `Warning: The target column "${targetColumn}" has ${uniqueIntValues.size} unique integer values in the preview.\n\nThis looks like a continuous numerical column (e.g. price, area, count) — Classification may fail or give poor results.\n\nDo you want to switch to Regression instead? Click OK to switch, Cancel to continue with Classification.`
+        );
+        if (proceed) {
+          setProblemType('regression');
+          return;
+        }
       }
 
       if (problemType === 'regression' && isCategoricalStr) {

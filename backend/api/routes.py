@@ -149,15 +149,11 @@ async def get_history(run_id: str, client: Client = Depends(get_auth_client)):
             # Since Optuna creates its own relational tables, it's easier to load the study via Optuna 
             # if we have the connection string.
             import optuna
-            from core.config import settings
+            from core.supabase import optuna_storage
             
-            if settings.SUPABASE_DB_URI:
-                storage = optuna.storages.RDBStorage(
-                    url=settings.SUPABASE_DB_URI,
-                    skip_table_creation=True
-                )
+            if optuna_storage:
                 try:
-                    study = optuna.load_study(study_name=study_name, storage=storage)
+                    study = optuna.load_study(study_name=study_name, storage=optuna_storage)
                     trials = []
                     for t in study.trials:
                         if t.state == optuna.trial.TrialState.COMPLETE and t.value is not None:

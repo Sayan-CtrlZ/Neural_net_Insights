@@ -94,19 +94,11 @@ def run_optimization_local(
     """
     logger.info(f"Starting local optimization for {problem_type} with {n_trials} trials (Run: {run_id})")
     
-    # We maximize both accuracy and r2 in this setup
-    from core.config import settings
-    
-    storage = None
-    if settings.SUPABASE_DB_URI:
-        # Use Postgres for persistent storage
-        storage = optuna.storages.RDBStorage(
-            url=settings.SUPABASE_DB_URI,
-            engine_kwargs={"pool_size": 20, "max_overflow": 0}
-        )
-        logger.info("Using PostgreSQL for Optuna storage")
-    else:
-        logger.warning("SUPABASE_DB_URI not found. Using in-memory storage for Optuna.")
+    # Use the shared, pooled Optuna storage singleton
+    from core.supabase import optuna_storage
+    storage = optuna_storage
+    if storage is None:
+        logger.warning("Shared Optuna storage not available. Using in-memory storage.")
 
     study = optuna.create_study(
         direction="maximize", 
@@ -288,16 +280,11 @@ def run_optimization_background(
         run_status = runs_store.get(run_id, {}).get("status") if runs_store else None
         if run_status != "completed":
             try:
-                from core.config import settings
-                if settings.SUPABASE_DB_URI:
-                    import optuna
-                    storage = optuna.storages.RDBStorage(
-                        url=settings.SUPABASE_DB_URI,
-                        engine_kwargs={"pool_size": 5, "max_overflow": 0}
-                    )
+                from core.supabase import optuna_storage
+                if optuna_storage:
                     study_name = f"study_{run_id}"
                     try:
-                        optuna.delete_study(study_name=study_name, storage=storage)
+                        optuna.delete_study(study_name=study_name, storage=optuna_storage)
                         logger.info(f"Optuna study {study_name} telemetry cleared from DB.")
                     except KeyError:
                         pass
