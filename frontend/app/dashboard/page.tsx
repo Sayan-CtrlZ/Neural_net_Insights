@@ -278,20 +278,20 @@ export default function Dashboard() {
         {/* Left Pane: Config and Status */}
         <Panel panelRef={leftPanelRef} collapsible={true} collapsedSize={0} defaultSize={65} minSize={40} className="h-full flex flex-col overflow-y-auto custom-scrollbar">
 
-          <header className="px-8 py-6 border-b border-slate-200 dark:border-white/20 flex justify-between items-end bg-[#FAFAFA] dark:bg-[#121212] shrink-0">
+          <header className="px-6 py-4 border-b border-slate-100 dark:border-white/10 flex justify-between items-end bg-white dark:bg-[#0d0d0d] shrink-0">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight mb-1 text-slate-900 dark:text-white">Optuna Engine</h1>
-            <p className="text-sm text-slate-500 dark:text-white/60 dark:text-white/40">Configure parameters and monitor telemetry.</p>
+            <h1 className="text-base font-semibold tracking-tight text-slate-800 dark:text-white">Optuna Engine</h1>
+            <p className="text-xs text-slate-400 dark:text-white/40 mt-0.5">Configure parameters and monitor telemetry.</p>
           </div>
         </header>
 
         <div className="p-8 space-y-8">
 
           {/* Configuration Module */}
-          <div className="bg-white dark:bg-[#121212] border border-slate-200 dark:border-white/20 rounded-2xl shadow-sm overflow-hidden">
-            <div className="bg-gradient-to-r from-indigo-100/90 to-blue-50/60 dark:from-white/10 dark:to-white/5 px-5 py-3 flex items-center gap-2 border-b border-indigo-100 dark:border-white/20">
-              <HardDrive size={16} className="text-indigo-700" />
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Data Ingestion</h2>
+          <div className="bg-white dark:bg-[#111111] border border-slate-100 dark:border-white/10 rounded-xl overflow-hidden">
+            <div className="px-4 py-2.5 flex items-center gap-2 border-b border-slate-100 dark:border-white/10 bg-slate-50/80 dark:bg-[#171717]">
+              <HardDrive size={13} className="text-slate-400 dark:text-white/40" />
+              <h2 className="text-xs font-semibold text-slate-500 dark:text-white/50 uppercase tracking-wider">Data Ingestion</h2>
             </div>
 
             {activeRun && activeRun.status === 'running' ? (
@@ -409,18 +409,18 @@ export default function Dashboard() {
           </div>
 
           {/* Visualization Module */}
-          <div className="bg-white dark:bg-[#121212] border border-slate-200 dark:border-white/20 rounded-2xl shadow-sm overflow-hidden relative">
-            <div className="bg-gradient-to-r from-violet-100/90 to-fuchsia-50/60 dark:from-white/10 dark:to-white/5 px-5 py-3 flex items-center justify-between border-b border-violet-100/50 dark:border-white/20">
+          <div className="bg-white dark:bg-[#111111] border border-slate-100 dark:border-white/10 rounded-xl overflow-hidden relative">
+            <div className="px-4 py-2.5 flex items-center justify-between border-b border-slate-100 dark:border-white/10 bg-slate-50/80 dark:bg-[#171717]">
               <div className="flex items-center gap-2">
-                <Radar size={16} className="text-violet-700" />
-                <h2 className="text-sm font-bold text-slate-900 dark:text-white">Telemetry</h2>
+                <Radar size={13} className="text-slate-400 dark:text-white/40" />
+                <h2 className="text-xs font-semibold text-slate-500 dark:text-white/50 uppercase tracking-wider">Telemetry</h2>
               </div>
               <button 
                 onClick={() => setIsChartFullscreen(true)}
-                className="text-slate-400 dark:text-white/40 hover:text-indigo-600 transition-colors p-1"
+                className="text-slate-300 dark:text-white/30 hover:text-slate-600 dark:hover:text-white/70 transition-colors p-1"
                 title="View Fullscreen"
               >
-                <Maximize2 size={16} />
+                <Maximize2 size={13} />
               </button>
             </div>
             <div className="flex flex-col lg:flex-row border-b border-gray-100 min-h-[350px]">
@@ -495,9 +495,9 @@ export default function Dashboard() {
               </div>
               
               {/* Leaderboard Panel */}
-              <div className="w-full lg:w-72 bg-slate-50 dark:bg-[#1a1a1a] flex flex-col border-t lg:border-t-0 border-slate-100 dark:border-white/20 overflow-hidden shrink-0">
-                <div className="p-4 border-b border-slate-100 dark:border-white/20 bg-white dark:bg-[#121212]">
-                  <h3 className="text-[10px] font-bold text-slate-500 dark:text-white/40 uppercase tracking-wider flex items-center gap-1.5"><Activity size={12}/> Model Leaderboard</h3>
+              <div className="w-full lg:w-64 bg-slate-50/50 dark:bg-[#111111] flex flex-col border-t lg:border-t-0 border-slate-100 dark:border-white/10 overflow-hidden shrink-0">
+                <div className="px-4 py-2.5 border-b border-slate-100 dark:border-white/10 bg-slate-50/80 dark:bg-[#171717]">
+                  <h3 className="text-[10px] font-semibold text-slate-400 dark:text-white/40 uppercase tracking-wider flex items-center gap-1.5"><Activity size={11}/> Leaderboard</h3>
                 </div>
                 <div className="flex-1 p-4 space-y-3">
                   {chartData.length === 0 ? (
@@ -587,14 +587,14 @@ export default function Dashboard() {
       </Panel>
 
       {/* Resize Handle */}
-      <PanelResizeHandle className="w-1.5 bg-slate-200 hover:bg-indigo-500 cursor-col-resize transition-colors shrink-0 z-10" />
+      <PanelResizeHandle className="w-px bg-slate-100 dark:bg-white/10 hover:bg-indigo-400 cursor-col-resize transition-colors shrink-0 z-10" />
 
       {/* Right Pane: Data Preview */}
-      <Panel panelRef={rightPanelRef} collapsible={true} collapsedSize={0} defaultSize={35} minSize={20} className="h-full bg-white dark:bg-[#121212] flex flex-col border-l border-slate-200 dark:border-white/20">
-        <header className="px-6 py-4 border-b border-slate-200 dark:border-white/20 flex justify-between items-center bg-slate-50 dark:bg-[#1a1a1a] shrink-0">
+      <Panel panelRef={rightPanelRef} collapsible={true} collapsedSize={0} defaultSize={35} minSize={20} className="h-full bg-white dark:bg-[#0d0d0d] flex flex-col border-l border-slate-100 dark:border-white/10">
+        <header className="px-4 py-2.5 border-b border-slate-100 dark:border-white/10 flex justify-between items-center bg-slate-50/80 dark:bg-[#171717] shrink-0">
           <div>
-            <h1 className="text-sm font-bold tracking-tight text-slate-800 dark:text-white flex items-center gap-2">
-              <Table size={16} className="text-indigo-600" />
+            <h1 className="text-xs font-semibold text-slate-500 dark:text-white/50 uppercase tracking-wider flex items-center gap-1.5">
+              <Table size={11} className="text-slate-400 dark:text-white/40" />
               Data Preview
             </h1>
           </div>
@@ -622,11 +622,11 @@ export default function Dashboard() {
           ) : (
             <div className="inline-block min-w-full align-middle">
               <table className="min-w-full text-xs text-left border-separate border-spacing-0">
-                <thead className="bg-slate-100 dark:bg-[#222222] text-slate-600 sticky top-0 z-20 shadow-sm">
+                <thead className="bg-slate-50 dark:bg-[#171717] text-slate-500 dark:text-white/40 sticky top-0 z-20">
                   <tr>
-                    <th className="px-3 py-2 border-r border-b border-slate-300 w-12 text-center font-bold sticky left-0 z-30 bg-slate-200">#</th>
+                    <th className="px-3 py-2 border-r border-b border-slate-100 dark:border-white/10 w-10 text-center text-[10px] font-semibold sticky left-0 z-30 bg-slate-100 dark:bg-[#1a1a1a]">#</th>
                     {columns.map(col => (
-                      <th key={col} className="px-4 py-2 border-r border-b border-slate-300 font-bold whitespace-nowrap bg-slate-100 dark:bg-[#222222]">
+                      <th key={col} className="px-3 py-2 border-r border-b border-slate-100 dark:border-white/10 text-[10px] font-semibold uppercase tracking-wider whitespace-nowrap bg-slate-50 dark:bg-[#171717]">
                         {col}
                       </th>
                     ))}
@@ -634,12 +634,12 @@ export default function Dashboard() {
                 </thead>
                 <tbody className="font-mono text-slate-700 dark:text-white/80">
                   {previewData.map((row, i) => (
-                    <tr key={i} className="hover:bg-indigo-50 dark:bg-white/10 transition-colors group">
-                      <td className="px-3 py-1.5 border-r border-b border-slate-300 text-slate-500 dark:text-white/40 text-center bg-slate-100 dark:bg-[#222222] font-bold sticky left-0 z-10 group-hover:bg-indigo-100 group-hover:text-indigo-800 transition-colors">
+                    <tr key={i} className="hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors group">
+                      <td className="px-3 py-1 border-r border-b border-slate-100 dark:border-white/10 text-slate-400 dark:text-white/30 text-center text-[10px] font-mono sticky left-0 z-10 bg-white dark:bg-[#0d0d0d] group-hover:bg-slate-50 dark:group-hover:bg-[#171717] transition-colors">
                         {i + 1}
                       </td>
                       {columns.map(col => (
-                        <td key={col} className="px-4 py-1.5 border-r border-b border-slate-200 dark:border-white/20 whitespace-nowrap bg-white dark:bg-[#121212] group-hover:bg-indigo-50 dark:bg-white/10/50 transition-colors">
+                        <td key={col} className="px-3 py-1 border-r border-b border-slate-100 dark:border-white/10 whitespace-nowrap text-slate-600 dark:text-white/70 text-xs font-mono bg-white dark:bg-[#0d0d0d] group-hover:bg-slate-50 dark:group-hover:bg-[#171717] transition-colors">
                           {row[col] !== null && row[col] !== undefined ? String(row[col]) : ''}
                         </td>
                       ))}
