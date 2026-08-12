@@ -1,6 +1,6 @@
 # Neural Net Insights
 
-**Live Demo:** [https://neural-net-insights.vercel.app](https://neural-net-insights.vercel.app)
+**Live Demo:** [https://neural-net-insights.vercel.app](https://neuro.sayanbuilds.me)
 
 Neural Net Insights is an enterprise-grade platform designed to automate machine learning model selection and hyperparameter optimization. By leveraging a distributed Bayesian engine, the system allows users to upload datasets, select target variables, and automatically discover the optimal machine learning architecture for their specific problem space with zero manual configuration.
 
